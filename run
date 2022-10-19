@@ -1,17 +1,11 @@
-#!/bin/bash
-#SBATCH -p xeonv4 --exclusive -n 28 -N 1 -c 1
-set -e
-ulimit -s unlimited
-module load python/py-numpy-1.18.1-gcc-9.2.0
-NG=3
-NP=10000
-
+#!/bin/bash -e
 source ~/qp2/quantum_package.rc
 
-FILE=${1}_${NG}_${NP}.ezfio
+
+FILE=h2.ezfio
 rm -rf $FILE
-qp_create_ezfio -b input_games_VB1 $1.xyz -o $FILE --charge=1 
-#qp_create_ezfio -b input_games_VB1 $1.xyz -o $FILE
+#qp_create_ezfio -b input_games_VB1 $1.xyz -o $FILE --charge=1 
+qp_create_ezfio -b input_games_VB1 ${FILE%.ezfio}.xyz -o $FILE
 qp set_file $FILE
 qp_run scf $FILE
 time mpirun $PWD/a.out

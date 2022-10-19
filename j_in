@@ -29,9 +29,9 @@ Print orbitals?
 0
 ****************************************************
 ZVMC for ONE-electron integrals. Number of MC steps?
- 40
+ 4000
 ZVMC for TWO-electron integrals. Number of MC steps?
- 40
+ 4000
 ************************************************************
 ZV PARAMETERS: a? b? parameters of coordinate transformation
 1.8 0.

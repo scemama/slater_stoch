@@ -8,10 +8,10 @@ def read_one(filename):
         l = []
         for line in f:
            try:
-            i, j, x = line.replace('D','E').split()
+             i, j, x = line.replace('D','E').split()
            except:
-            i, j, x, _ = line.replace('D','E').split()
-            l.append( (int(i)-1, int(j)-1, float(x)) )
+             i, j, x, _ = line.replace('D','E').split()
+           l.append( (int(i)-1, int(j)-1, float(x)) )
 
     ao_num = l[-1][0]+1
 
