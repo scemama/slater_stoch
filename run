@@ -1,0 +1,29 @@
+#!/bin/bash
+#SBATCH -p xeonv4 --exclusive -n 28 -N 1 -c 1
+set -e
+ulimit -s unlimited
+module load python/py-numpy-1.18.1-gcc-9.2.0
+NG=3
+NP=10000
+
+source ~/qp2/quantum_package.rc
+
+FILE=${1}_${NG}_${NP}.ezfio
+rm -rf $FILE
+qp_create_ezfio -b input_games_VB1 $1.xyz -o $FILE --charge=1 
+#qp_create_ezfio -b input_games_VB1 $1.xyz -o $FILE
+qp set_file $FILE
+qp_run scf $FILE
+time mpirun $PWD/a.out
+cp bielec_ao W.qp
+cp overlap_ao_ex S.qp
+cp kinetic_ao_ex T.qp
+cp nuclear_ao_ex V.qp
+sync
+sleep 1
+./clean_Vee.py
+sleep 1
+qp_run import_integrals_ao $FILE < number_of_orbitals_VB1
+qp set nuclei io_nuclear_repulsion None
+sleep 1
+qp_run scf $FILE | tee $FILE.scf.out
