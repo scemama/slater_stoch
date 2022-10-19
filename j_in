@@ -19,7 +19,7 @@ If GTO and FINITE-RANGE = FALSE : Gaussian ONE- and TWO-electron computed exactl
 
 If STO and FINITE-RANGE = FALSE : Exact ONE- and TWO-electron computed with ZVMC
  ng for gaussian approximation of STO (and i_add_2p,i_add_3d,g_thr,i_add_large_g)
- 3 0 0 4. 0
+ 10 0 0 4. 0
 
 If STO-GTO and FINITE-RANGE = TRUE : Exact ONE- and TWO-electron computed with ZVMC
  level for gaussian approximation of KT [rc(n)] (level=1 to 4 by increasing accuracy)
@@ -29,9 +29,9 @@ Print orbitals?
 0
 ****************************************************
 ZVMC for ONE-electron integrals. Number of MC steps?
- 4000
+ 0
 ZVMC for TWO-electron integrals. Number of MC steps?
- 4000
+ 40000
 ************************************************************
 ZV PARAMETERS: a? b? parameters of coordinate transformation
 1.8 0.

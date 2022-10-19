@@ -37,7 +37,8 @@ double precision, allocatable :: rho(:,:,:),poly(:,:,:)
 double precision, allocatable :: weight(:),weight_kin(:)
 double precision, allocatable :: rho_G(:,:,:)
 double precision, allocatable :: weight_G(:),weight_kin_G(:)
-double precision, allocatable :: rjacob(:)
+double precision, allocatable :: rjacob(:), rjacob1(:,:,:), rjacob2(:,:,:)
+double precision, allocatable :: pi_1(:)
 
 character*(128) :: filename_in
 character*(128) :: filename_out_gaus_ijkl
@@ -64,7 +65,6 @@ allocate(rho(nw,nbasis_max*nbasis_max,2),poly(nw,nbasis_max*nbasis_max,2))
 allocate(weight(nw),weight_kin(nw) )
 allocate(rho_G(nw,nbasis_max*nbasis_max,2))
 allocate(weight_G(nw),weight_kin_G(nw))
-allocate(rjacob(nw))
 
 MPI=.false.
 mpi_rank=0
@@ -200,6 +200,8 @@ if(i_print_orb.eq.1)call print_orb
 
 if(mpi_rank.eq.0)write(*,*)'**********************************'
 if(mpi_rank.eq.0)write(*,*)'Number of basis functions ',nbasis
+
+allocate(rjacob(nw),rjacob1(nw,nbasis,nbasis),rjacob2(nw,nbasis,nbasis))
 
 !! build arrays is(kcp),js(kcp),ks(kcp),ls(kcp) and kcp_ijkl(i,j,k,l) ;  kcp=1,nint and  i=1,nbasis (idem for j,k,l)
 !! nint= total number of two-electron integrals
@@ -398,6 +400,7 @@ do kcp=1,nint
 enddo
 !! end
 
+allocate(pi_1(nw))
 do kkk=1,nbl
 
  call cpu_time(t0)
@@ -414,8 +417,7 @@ do kkk=1,nbl
   call cpu_time(t1)
  do kk=1,npts_two_elec/nw
 
-  call draw_configuration(2,r1,r2)
-  call compute_pi0(2,r1,r2,pi_0)
+  call draw_configuration(r1,r2)
   do k=1,nbasis
    do i=k,nbasis
     if(i_tab_mc(i,k).eq.1)then
@@ -425,6 +427,7 @@ do kkk=1,nbl
     endif
    enddo !k
   enddo !i
+  call compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,nbasis)
 
 
   do kcp=1,nint
@@ -442,14 +445,13 @@ do kkk=1,nbl
 
    else
 
-     call compute_jacobian(2,i,k,j,l,r1,r2,rjacob)
-     factor2 = 1.d0/( (g_min(i)+g_min(k))*(g_min(j)+g_min(l)) )**1.5d0
+     rjacob(1:nw) = rjacob1(1:nw,i,k)*rjacob2(1:nw,j,l)
      do kw=1,nw
       d_x(1) = ut1(1,kw,ik)-ut2(1,kw,jl)
       d_x(2) = ut1(2,kw,ik)-ut2(2,kw,jl)
       d_x(3) = ut1(3,kw,ik)-ut2(3,kw,jl)
       r12_2 = d_x(1)*d_x(1) + d_x(2)*d_x(2) + d_x(3)*d_x(3)
-      factor=rjacob(kw)/pi_0(kw) * factor2
+      factor=rjacob(kw)/pi_0(kw)
       weight  (kw)=factor* rho  (kw,ik,1)*rho  (kw,jl,2)
       weight_G(kw)=factor* rho_G(kw,ik,1)*rho_G(kw,jl,2)
       r12_inv(kw) = real( 1./sqrt(real(r12_2,4)), 8) !simple precision
@@ -767,40 +769,29 @@ if(orb.eq.'3P')power(4)=1
 ijkl_gaus=ijkl_slater_xnynzn(nix,niy,niz,power,gam)
 end
 
-subroutine draw_configuration(i_el,r1,r2)
+subroutine draw_configuration(r1,r2)
 include 'j.inc'
 dimension r1(nw,3),r2(nw,3)
 double precision, parameter :: f = dsqrt(2.d0)
-!call random_number(r1)
 do kw=1,nw
  do ll=1,3
   call random_number(r1(kw,ll))
   r1(kw,ll)=f*dierfc(2.d0-2.d0*r1(kw,ll))
- enddo
-enddo
-if(i_el.eq.1)return
-!call random_number(r2)
-do kw=1,nw
- do ll=1,3
   call random_number(r2(kw,ll))
   r2(kw,ll)=f*dierfc(2.d0-2.d0*r2(kw,ll))
  enddo
 enddo
 end
 
-subroutine compute_pi0(i_el,r1,r2,pi_0)
+subroutine compute_pi0(r1,r2,pi_0)
 include 'j.inc'
 dimension r1(nw,3),r2(nw,3),pi_0(nw)
 double precision, parameter :: pi=dacos(-1.d0)
-double precision, parameter :: factor = 1.d0 / (dsqrt(2.d0*pi))**3
+double precision, parameter :: factor = 1.d0 / (2.d0*pi)**3
 do kw=1,nw
  r1_mod_2=r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3)
- pi_0(kw)=dexp(-0.5d0*r1_mod_2) * factor
-enddo
-if(i_el.eq.1)return
-do kw=1,nw
  r2_mod_2=r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3)
- pi_0(kw)=pi_0(kw)*dexp(-0.5d0*r2_mod_2) * factor
+ pi_0(kw)=dexp(-0.5d0*(r1_mod_2 + r2_mod_2)) * factor
 enddo
 end
 
@@ -951,30 +942,49 @@ enddo !!kw
 end
 
 !TODO
-subroutine compute_jacobian(i_el,i,k,j,l,r1,r2,rjacob)
+subroutine compute_jacobian(r1,rjacob,n)
 include 'j.inc'
-dimension r1(nw,3),r2(nw,3)
-dimension rjacob(nw)
-factor_ik = 0.5d0/dsqrt(g_min(i)+g_min(k))
-if(i_el.eq.1) then
-   do kw=1,nw
-    r1_mod=dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
-    f1=a_ZV(i,k)*factor_ik*r1_mod
-    rjacob(kw)=2.d0*dabs(f1*f1*f1)
-   enddo
-else
-  factor_jl = 0.5d0/dsqrt(g_min(j)+g_min(l))
-   do kw=1,nw
-    r1_mod=dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
-    r2_mod=dsqrt(r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3))
-    f1=a_ZV(i,k) * factor_ik*r1_mod
-    f2=a_ZV(i,k) * factor_jl*r2_mod
-    f12 = f1*f2
-    rjacob(kw)=4.d0*dabs(f12*f12*f12)
-   enddo
-endif
+dimension r1(nw,3)
+dimension rjacob(nw,n,n)
+do k=1,n
+  do i=k,n
+    factor_ik = a_ZV(i,k)/(g_min(i)+g_min(k))
+    do kw=1,nw
+      f1=factor_ik*dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
+      rjacob(kw,i,k)=0.25d0*dabs(f1*f1*f1)
+      rjacob(kw,k,i)= rjacob(kw,i,k)
+    enddo
+  enddo
+enddo
 end
 
+subroutine compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,n)
+include 'j.inc'
+double precision :: r1(nw,3), r2(nw,3),pi_0(nw), rjacob1(nw,n,n), rjacob2(nw,n,n)
+double precision :: d1(nw), d2(nw)
+double precision, parameter :: factor = 1.d0 / (2.d0*dacos(-1.d0))**3
+do kw=1,nw
+ r1_mod_2=r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3)
+ r2_mod_2=r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3)
+ d1(kw) = dsqrt(r1_mod_2)
+ d2(kw) = dsqrt(r2_mod_2)
+ pi_0(kw)= dexp(-0.5d0*(r1_mod_2 + r2_mod_2)) * factor
+enddo
+do k=1,n
+  do i=k,n
+    factor_ik = a_ZV(i,k)/(g_min(i)+g_min(k))
+    do kw=1,nw
+      f1=factor_ik*d1(kw)
+      rjacob1(kw,i,k)=0.25d0*dabs(f1*f1*f1)
+      rjacob1(kw,k,i)= rjacob1(kw,i,k)
+
+      f2=factor_ik*d2(kw)
+      rjacob2(kw,i,k)=0.25d0*dabs(f2*f2*f2)
+      rjacob2(kw,k,i)= rjacob2(kw,i,k)
+    enddo
+  enddo
+enddo
+end
 
 subroutine compute_f_fp_jacob(r,i,k,ic,f,fp)
 include 'j.inc'
