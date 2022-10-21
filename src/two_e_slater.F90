@@ -7,11 +7,7 @@ program integrals
   character*80,charabid
   character*80,MOLECULE
 
-  logical normalization_OA
-
   double precision precond(nbasis_max,nbasis_max)
-  double precision sqrtSii_gaus  (nbasis_max)
-  double precision sqrtSii_STO_ex(nbasis_max)
 
   !! BEGIN BIG ARRAYS nint_max
   double precision ijkl_gaus(nint_max)
@@ -109,12 +105,6 @@ program integrals
   read(5,'(a80)')charabid
   read(5,*)MOLECULE
   if(mpi_rank.eq.0)write(*,*)MOLECULE
-  do i=1,3
-    read(5,'(a80)')charabid
-    if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  enddo
-  read(5,*)basis_type
-  if(mpi_rank.eq.0)write(*,*)'basis_type=',basis_type
   read(5,'(a80)')charabid
   if(mpi_rank.eq.0)write(6,'(a80)')charabid
   if(mpi_rank.eq.0)print*,'file name for basis set?'
@@ -122,38 +112,10 @@ program integrals
   if(mpi_rank.eq.0)print*,'*******'
   if(mpi_rank.eq.0)write(*,*)trim(filename_basis)
   if(mpi_rank.eq.0)print*,'*******'
-  do i=1,3
-    read(5,'(a80)')charabid
-    if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  enddo
-  read(5,*)
   read(5,'(a80)')charabid
   if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  read(5,*)n_eps
-  if(mpi_rank.eq.0)write(6,*)n_eps
-  do i=1,5
-    read(5,'(a80)')charabid
-    if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  enddo
   read(5,*)ng0,i_add_2p,i_add_3d,g_thr,i_add_large_g
   if(mpi_rank.eq.0)write(6,*)ng0,i_add_2p,i_add_3d,g_thr,i_add_large_g
-  do i=1,3
-    read(5,'(a80)')charabid
-    if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  enddo
-  read(5,*)
-  do i=1,2
-    read(5,'(a80)')charabid
-    if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  enddo
-  read(5,*)
-  do i=1,2
-    read(5,'(a80)')charabid
-    if(mpi_rank.eq.0)write(6,'(a80)')charabid
-  enddo
-  read(5,*)npts_one_elec
-  if(mpi_rank.eq.0)write(*,*)'Number of MC steps for one-electron integrals=',npts_one_elec, ' times number of blocks'
-  if(mod(npts_one_elec,nw).ne.0)stop 'npts_one_elec must be a multiple of nw'
   read(5,'(a80)')charabid
   if(mpi_rank.eq.0)write(6,'(a80)')charabid
   read(5,*)npts_two_elec
@@ -163,25 +125,8 @@ program integrals
     read(5,'(a80)')charabid
     if(mpi_rank.eq.0)write(6,'(a80)')charabid
   enddo
-  read(5,*)aread,bread
+  read(5,*)aread
   if(mpi_rank.eq.0)print*,'aread=',aread
-  if(mpi_rank.eq.0)print*,'bread=',bread
-  if(mpi_rank.eq.0)print*,'Number of occupied orbitals?'
-  read(5,'(a80)')charabid
-  read(5,*)nocc
-  if(mpi_rank.eq.0)print*,'nocc=',nocc
-  if(mpi_rank.eq.0)print*,'Number iter for SCF calculations?'
-  read(5,'(a80)')charabid
-  read(5,*)niter_SCF
-  if(mpi_rank.eq.0)print*,'niter=',niter_SCF
-  !! Determination of one-center bielectronic
-  !if(mpi_rank.eq.0)print*,'mono_center_Slater?'
-  read(5,'(a80)')charabid
-  read(5,*)
-  !if(mpi_rank.eq.0)print*,'compute momo-center Slater=',mono_center_Slater
-  read(5,'(a80)')charabid
-  read(5,*)normalization_OA
-  if(mpi_rank.eq.0)print*,'orbital are normalized ?',normalization_OA
 
   !*****************
   ! END READ INPUT
@@ -219,7 +164,6 @@ program integrals
   num=nbasis**2
   do i=1,nbasis
     call one_elect(i,i,Sij,Vij,Kij)
-    sqrtSii_gaus(i)=dsqrt(dabs(Sij))
   enddo
 
   if(mpi_rank.eq.0)print*,'********************************************************************'
@@ -269,10 +213,6 @@ program integrals
       t0=t1
       k_sort=0
     endif
-
-    rnorm=sqrtSii_gaus(i)*sqrtSii_gaus(k)*sqrtSii_gaus(j)*sqrtSii_gaus(l)
-    if(.not.normalization_OA)rnorm=1.d0
-    ijkl_gaus(kcp)=ijkl_gaus(kcp)/rnorm
 
   enddo !kcp
 
@@ -353,25 +293,10 @@ program integrals
     l=ls(kcp)
     if(mono_center(kcp).eq.1)then
       call compute_int_slater(i,k,j,l,ijkl(kcp))
-      if(normalization_OA)then
-        rnorm=sqrtSii_STO_ex(i)*sqrtSii_STO_ex(k)*sqrtSii_STO_ex(j)*sqrtSii_STO_ex(l)
-        ijkl(kcp)=ijkl(kcp)/rnorm
-      endif
     endif
   enddo
   !! end calculation ***********************************
 
-  ! if normalization_OA = true we de-normalize for the ZV step
-  if(normalization_OA)then
-    do kcp=1,nint
-      i=is(kcp)
-      k=ks(kcp)
-      j=js(kcp)
-      l=ls(kcp)
-      rnorm=sqrtSii_gaus(i)*sqrtSii_gaus(k)*sqrtSii_gaus(j)*sqrtSii_gaus(l)
-      ijkl_gaus(kcp)=ijkl_gaus(kcp)*rnorm
-    enddo
-  endif
 
   do kcp=1,nint
     if(mono_center(kcp).eq.0)then
@@ -529,19 +454,6 @@ program integrals
 
     moy(:)=ijkl(:)
     moy2(:)=error_ijkl(:)
-    if(normalization_OA)then
-      do kcp=1,nint
-        if(mono_center(kcp).eq.0)then
-          i=is(kcp)
-          k=ks(kcp)
-          j=js(kcp)
-          l=ls(kcp)
-          rnorm=sqrtSii_STO_ex(i)*sqrtSii_STO_ex(k)*sqrtSii_STO_ex(j)*sqrtSii_STO_ex(l)
-          moy(kcp)=moy(kcp)/rnorm
-          moy2(kcp)=moy2(kcp)/rnorm
-        endif
-      enddo
-    endif
 
   endif
 

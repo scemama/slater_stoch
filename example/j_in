@@ -1,0 +1,13 @@
+Simulation number
+1
+Molecule (for SCF do not forget to enter the correct number of occupied orbitals below)
+h2o
+Name of basis filename
+VB1
+Ng for gaussian approximation of STO (and i_add_2p,i_add_3d,g_thr,i_add_large_g)
+ 4 0 0 4. 0
+ZVMC for TWO-electron integrals. Number of MC steps?
+ 4000
+************************************************************
+ZV PARAMETER a coordinate transformation?
+1.8

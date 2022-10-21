@@ -4,7 +4,6 @@ common/basis/nbasis
 
 character*3 basis_type
 common/bas/basis_type
-
 parameter(ng_max=30,is_type_max=3)
 parameter(nw=40)
 parameter(nint_max=13000000)
