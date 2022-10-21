@@ -61,7 +61,6 @@ program one_e_integrals
   read(5,'(a80)')charabid
   write(6,'(a80)')charabid
   read(5,*)
-  !if(mpi_rank.eq.0)write(6,*)n_eps
   do i=1,5
     read(5,'(a80)')charabid
     write(6,'(a80)')charabid
@@ -83,7 +82,6 @@ program one_e_integrals
     write(6,'(a80)')charabid
   enddo
   read(5,*)
-  !if(mpi_rank.eq.0)write(*,*)'Number of MC steps for one-electron integrals=',npts_one_elec, ' times number of blocks'
   read(5,'(a80)')charabid
   write(6,'(a80)')charabid
   read(5,*)
@@ -94,16 +92,10 @@ program one_e_integrals
   read(5,*)
   read(5,'(a80)')charabid
   read(5,*)
-  !if(mpi_rank.eq.0)print*,'nocc=',nocc
-  !if(mpi_rank.eq.0)print*,'Number iter for SCF calculations?'
   read(5,'(a80)')charabid
   read(5,*)
-  !if(mpi_rank.eq.0)print*,'niter=',niter_SCF
-  !! Determination of one-center bielectronic
-  !if(mpi_rank.eq.0)print*,'mono_center_Slater?'
   read(5,'(a80)')charabid
   read(5,*)
-  !if(mpi_rank.eq.0)print*,'compute momo-center Slater=',mono_center_Slater
   read(5,'(a80)')charabid
   read(5,*)normalization_OA
   print*,'orbital are normalized ?',normalization_OA

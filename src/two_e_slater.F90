@@ -1,8 +1,8 @@
 program integrals
   include 'j.inc'
-  !!!!!!!!!!COMMENT IF NOT MPI
+#ifdef HAVE_MPI
   include 'mpif.h'
-  !!!!!!!!!!COMMENT IF NOT MPI
+#endif
 
   character*80,charabid
   character*80,MOLECULE
@@ -46,11 +46,13 @@ program integrals
   character*(128)                :: filename_basis
 
   integer mpi_rank
-  logical MPI
+
+#ifdef HAVE_MPI
   integer ierr, mpi_size, irequest
   integer, dimension(MPI_STATUS_SIZE) :: mpi_status
   logical mpi_flag
   double precision mpi_size_inv
+#endif
 
   integer*4                      :: seed(33)
   integer*4                      :: put(33)
@@ -66,20 +68,17 @@ program integrals
   allocate(rho_G(nw,nbasis_max*nbasis_max,2))
   allocate(weight_G(nw),weight_kin_G(nw))
 
-  MPI=.false.
   mpi_rank=0
   ijkl = 0.d0
   ijkl2 = 0.d0
 
-  !!!!!!!!!!!COMMENT IF NOT MPI
+#ifdef HAVE_MPI
   call mpi_init(ierr)
   call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
   call MPI_COMM_SIZE (MPI_COMM_WORLD, mpi_size, ierr)
   call sleep(mpi_rank/20)
-  MPI=mpi_size > 1
-  ! write(*,*)'mpi_rank=',mpi_rank
   if(mpi_rank.eq.0)write(*,*)'mpi_size=',mpi_size
-  !!!!!!!!!!!COMMENT IF NOT MPI
+#endif
 
   write(filename_in,'(A4)') 'j_in'
 
@@ -95,9 +94,9 @@ program integrals
     write(filename_out_ijkl,'(A9)')'bielec_ao'
   endif
 
-  !!!!!!!!!!!COMMENT IF NOT MPI
+#ifdef HAVE_MPI
   seed(1) = mpi_rank+1+(num_simulation-1)*10000
-  !!!!!!!!!!!COMMENT IF NOT MPI
+#endif
   do i_rand=2,12
     seed(i_rand) = i_rand
   enddo
@@ -276,9 +275,10 @@ program integrals
     ijkl_gaus(kcp)=ijkl_gaus(kcp)/rnorm
 
   enddo !kcp
-  !!!!!!!!!!!COMMENT IF NOT MPI
+
+#ifdef HAVE_MPI
   call mpi_allreduce(MPI_IN_PLACE,ijkl_gaus, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
-  !!!!!!!!!!!COMMENT IF NOT MPI
+#endif
 
 
   if (mpi_rank.eq.0) then
@@ -510,17 +510,23 @@ program integrals
     endif
   enddo
 
-  !!!!!!!!!!COMMENT IF NOT MPI
-  mpi_size_inv = 1.d0/dble(mpi_size)
-  call MPI_AllReduce(ijkl, moy, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
-  moy(:)=moy(:) * mpi_size_inv
 
-  moy2t(:) = (ijkl(:) -  moy(:))**2
-  call MPI_reduce(moy2t, moy2, nint, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
-  moy2(:)=dsqrt(moy2(:) * mpi_size_inv/ (dble(mpi_size-1)) )
-  !!!!!!!!!!COMMENT IF NOT MPI
+  if (mpi_size > 1) then
 
-  if(.not.MPI)then
+#ifdef HAVE_MPI
+    mpi_size_inv = 1.d0/dble(mpi_size)
+    call MPI_AllReduce(ijkl, moy, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
+    moy(:)=moy(:) * mpi_size_inv
+
+    moy2t(:) = (ijkl(:) -  moy(:))**2
+    call MPI_reduce(moy2t, moy2, nint, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
+    moy2(:)=dsqrt(moy2(:) * mpi_size_inv/ (dble(mpi_size-1)) )
+#else
+    stop 'mpi_size should not be >1'
+#endif
+
+  else
+
     moy(:)=ijkl(:)
     moy2(:)=error_ijkl(:)
     if(normalization_OA)then
@@ -536,7 +542,9 @@ program integrals
         endif
       enddo
     endif
+
   endif
+
 
   if (mpi_rank == 0) then
 
@@ -578,10 +586,10 @@ program integrals
 
   print*,'ZVMC DONE for mpi_rank=',mpi_rank
 
-  !!!!!!!!!!COMMENT IF NOT MPI
+#ifdef HAVE_MPI
   call MPI_BARRIER (MPI_COMM_WORLD, ierr)
   call mpi_finalize(ierr)
-  !!!!!!!!!!COMMENT IF NOT MPI
+#endif
 
 end
 
