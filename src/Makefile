@@ -37,6 +37,7 @@ TWO_FILES= \
  binom_transp.o \
  compare_nuclei.o \
  compute_densities.o \
+ compute_int_slater.o \
  compute_jacobian_and_pi0.o \
  compute_r_tilde.o \
  compute_u_tilde.o \
@@ -51,6 +52,7 @@ TWO_FILES= \
  compute_lmin_lmax.o \
  count_multi_center_integrals.o \
  chi2.o \
+ doublefact.o \
  eigsrt.o \
  gauss_ijkl.o \
  gaunt.o \
@@ -62,6 +64,10 @@ TWO_FILES= \
  norm_sto.o \
  number_atom.o \
  one_elect.o \
+ one_electron_I.o \
+ one_electron_sij.o \
+ one_electron_Kij.o \
+ one_electron_Vij.o \
  read_basis.o \
  read_geometry.o \
  read_fit_SMILES.o \

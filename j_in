@@ -1,7 +1,7 @@
 Simulation number
 1
 Molecule (for SCF do not forget to enter the correct number of occupied orbitals below)
-h2
+h2o
 ****************************************
 ENTER TYPE OF ORBITALS USED : GTO or STO
 ****************************************
@@ -19,7 +19,7 @@ If GTO and FINITE-RANGE = FALSE : Gaussian ONE- and TWO-electron computed exactl
 
 If STO and FINITE-RANGE = FALSE : Exact ONE- and TWO-electron computed with ZVMC
  ng for gaussian approximation of STO (and i_add_2p,i_add_3d,g_thr,i_add_large_g)
- 10 0 0 4. 0
+ 4 0 0 4. 0
 
 If STO-GTO and FINITE-RANGE = TRUE : Exact ONE- and TWO-electron computed with ZVMC
  level for gaussian approximation of KT [rc(n)] (level=1 to 4 by increasing accuracy)
@@ -31,12 +31,12 @@ Print orbitals?
 ZVMC for ONE-electron integrals. Number of MC steps?
  0
 ZVMC for TWO-electron integrals. Number of MC steps?
- 40000
+ 4000
 ************************************************************
 ZV PARAMETERS: a? b? parameters of coordinate transformation
 1.8 0.
 Number of occupied orbitals
-1
+5
 Number of SCF iterations
 10
 mono_center_Slater_exact = true  (only when monte carlo)

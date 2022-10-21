@@ -8,8 +8,8 @@ rm -rf $FILE
 qp_create_ezfio -b input_games_VB1 ${FILE%.ezfio}.xyz -o $FILE
 qp set_file $FILE
 qp_run scf $FILE
-time mpirun $PWD/one_e_slater
-time mpirun $PWD/two_e_slater
+time mpirun $PWD/src/one_e_slater
+time mpirun $PWD/src/two_e_slater
 cp bielec_ao W.qp
 cp overlap_ao_ex S.qp
 cp kinetic_ao_ex T.qp
