@@ -172,19 +172,6 @@ end
 
 
 
-double precision function I_n_bibi(n,lmax,alpha)
-  implicit none
-  ! integral of exp(-alpha * t^2) * t^n between [0:1]
-  integer                        :: lmax,n
-  double precision               :: alpha
-  integer                        :: l
-  double precision               :: fact,power
-  I_n_bibi = 0.d0
-  do l = 0, lmax,1
-    I_n_bibi = I_n_bibi + (-1.d0)**l * power(2*l,alpha) / (fact(l) * (n+2 * l +1))
-  enddo
-
-end
 
 double precision function I_n_michel(epsilo,n,lmax)
   ! function that calculates the following integral involved in the bielectronic integrals :
@@ -3103,7 +3090,7 @@ integer :: power_A(3),power_B(3)
 integer :: i,j,k,l,n_pt
 double precision :: P_center(3)
 double precision :: d(0:n_pt_in),pouet,coeff,rho,dist,const,pouet_2,p,p_inv,factor
-double precision :: I_n_special_exact,integrate_bourrin,I_n_bibi
+double precision :: I_n_special_exact,integrate_bourrin
 double precision ::  V_e_n,const_factor,dist_integral,two_pi
 double precision :: accu,epsilo,rint
 integer :: n_pt_in,n_pt_out,lmax
@@ -5482,70 +5469,4 @@ subroutine gauleg(x1,x2,x,w,n)
    enddo
 end
 
-!***** various simple routines
-
-double precision function binom_func(i,j)
-  implicit none
-  !EGIN_DOC
-  !.. math                       ::
-  !
-  !  \frac{i!}{j!(i-j)!}
-  !
-  !ND_DOC
-  integer,intent(in)             :: i,j
-  double precision               :: logfact
-  integer, save                  :: ifirst
-  double precision, save         :: memo(0:15,0:15)
-  integer                        :: k,l
-  if (ifirst == 0) then
-    ifirst = 1
-    do k=0,15
-      do l=0,15
-        memo(k,l) = dexp( logfact(k)-logfact(l)-logfact(k-l) )
-      enddo
-    enddo
-  endif
-  if ( (i<=15).and.(j<=15) ) then
-    binom_func = memo(i,j)
-  else
-    binom_func = dexp( logfact(i)-logfact(j)-logfact(i-j) )
-  endif
-end
-
-double precision function binom_transp(i,j)
-implicit none
-integer,intent(in)             :: i,j
-double precision               :: binom_func
-binom_transp=binom_func(j,i)
-end
-
-double precision function logfact(n)
-  implicit none
-  !EGIN_DOC
-  ! n!
-  !ND_DOC
-  integer                        :: n
-  double precision, save         :: memo(1:100)
-  integer, save                  :: memomax = 1
-  integer                        :: i
-
-  if (n<=memomax) then
-    if (n<2) then
-      logfact = 0.d0
-    else
-      logfact = memo(n)
-    endif
-    return
-  endif
-
-  memo(1) = 0.d0
-  do i=memomax+1,min(n,100)
-    memo(i) = memo(i-1)+dlog(dble(i))
-  enddo
-  memomax = min(n,100)
-  logfact = memo(memomax)
-  do i=101,n
-    logfact = logfact + dlog(dble(i))
-  enddo
-end function
 

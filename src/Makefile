@@ -1,5 +1,6 @@
 FC = mpiifort
-FFLAGS = -xHost -g -O0 -mkl=sequential
+#FFLAGS = -xHost -g -O0 -mkl=sequential
+FFLAGS = -xHost -g -O2 -mkl=sequential 
 
 default: one_e_slater two_e_slater
 
@@ -7,6 +8,8 @@ default: one_e_slater two_e_slater
 	$(FC) $(FFLAGS) -c $^
 
 ONE_FILES= \
+ binom_func.o \
+ binom_transp.o \
  build_gaussian_expansion_of_orbitals.o \
  fact.o \
  fact_inv.o \
@@ -16,6 +19,7 @@ ONE_FILES= \
  eigsrt.o \
  gaunt.o \
  jacobi.o \
+ logfact.o \
  norm_sto.o \
  number_atom.o \
  one_e_slater.o \
@@ -29,7 +33,14 @@ ONE_FILES= \
  write_STO_in_file_info_basis.o
 
 TWO_FILES= \
+ binom_func.o \
+ binom_transp.o \
  compare_nuclei.o \
+ compute_densities.o \
+ compute_jacobian_and_pi0.o \
+ compute_r_tilde.o \
+ compute_u_tilde.o \
+ draw_configuration.o \
  dierfc.o \
  fact.o \
  fact_inv.o \
@@ -47,6 +58,7 @@ TWO_FILES= \
  ijkl_slater_xnynzn.o \
  jacobi.o \
  kinetic_slater.o \
+ logfact.o \
  norm_sto.o \
  number_atom.o \
  one_elect.o \
