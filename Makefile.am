@@ -3,6 +3,7 @@ ACLOCAL_AMFLAGS = -I m4
 bin_PROGRAMS = one_e_slater two_e_slater
 
 COMMON_SOURCE = \
+ src/common_data.F90 \
  src/add_poly_multiply.F90 \
  src/bielec_integral.F90 \
  src/bigF.F90 \
@@ -14,8 +15,6 @@ COMMON_SOURCE = \
  src/build_mapping_ijkl.F90 \
  src/chi2.F90 \
  src/doublefact.F90 \
- src/eigsrt.F90 \
- src/fact_inv.F90 \
  src/fact.F90 \
  src/gaunt.F90 \
  src/gaussian_product.F90 \
@@ -31,7 +30,6 @@ COMMON_SOURCE = \
  src/I_x1_pol_mult_recurs.F90 \
  src/I_x2_pol_mult_mono_elec.F90 \
  src/I_x2_pol_mult.F90 \
- src/jacobi.F90 \
  src/logfact.F90 \
  src/multiply_poly_2.F90 \
  src/multiply_poly.F90 \

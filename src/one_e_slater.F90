@@ -1,5 +1,5 @@
 program one_e_integrals
-  include 'j.inc'
+  use common_data
 
   character(80) :: charabid
   character(80) :: MOLECULE

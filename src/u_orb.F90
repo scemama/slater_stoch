@@ -1,6 +1,6 @@
 !!!!  u_orb is the radial part of the atomic orbitals for which the 1- and 2-electron integrals are computed
 double precision function u_orb(i_orb,r)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i_orb
   double precision, intent(in) :: r
   integer :: mm

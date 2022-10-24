@@ -1,5 +1,5 @@
 subroutine read_basis(filename_basis)
-  include 'j.inc'
+  use common_data
   character(128), intent(in)    :: filename_basis
   character(80) ATOM_READ
   character(80) orb

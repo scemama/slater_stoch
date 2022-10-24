@@ -10,7 +10,6 @@ subroutine give_explicit_poly_and_gaussian(P_new,P_center,p,fact_k,iorder,alpha,
 !  END_DOC
   implicit none
 
-!!  include 'constants.include.F'
 integer, parameter :: max_dim = 511
 integer, parameter :: N_int_max = 32
 

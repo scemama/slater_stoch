@@ -1,5 +1,5 @@
 subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i, k
   double precision, intent(in)  :: ut1(3,nw,nbasis_max*nbasis_max)
   double precision, intent(in)  :: ut2(3,nw,nbasis_max*nbasis_max)
@@ -11,7 +11,7 @@ subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
 
   double precision :: dx, dy, dz, poly_i, poly_k, r_i, r_k, poly_ik, r_ik
 
-  double precision, external :: u_orb, u_gauss, phi_orb, phi_gaus
+  double precision, external :: u_orb, u_gauss
 
   ik = (k-1)*nbasis_max+i
   do kw=1,nw
@@ -56,50 +56,53 @@ subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
     rho_G(kw,ik,2)= phi_gaus(i,ut2(1,kw,ik)) * phi_gaus(k,ut2(1,kw,ik))
   enddo
 
-end
+  contains
 
-double precision function phi_orb(i_orb,x)
-  include 'j.inc'
-  integer, intent(in) :: i_orb
-  double precision, intent(in) :: x(3)
-  double precision :: dx, dy, dz, r
-  integer :: i
-  double precision, external :: u_orb
-  dx=x(1)-center(1,i_orb)
-  dy=x(2)-center(2,i_orb)
-  dz=x(3)-center(3,i_orb)
-  r=dsqrt(dx*dx+dy*dy+dz*dz)
-  phi_orb=u_orb(i_orb,r)
-  do i=1,npower(1,i_orb)
-    phi_orb  = phi_orb *dx
-  end do
-  do i=1,npower(2,i_orb)
-    phi_orb  = phi_orb *dy
-  end do
-  do i=1,npower(3,i_orb)
-    phi_orb  = phi_orb *dz
-  end do
-end
 
-double precision function phi_gaus(i_orb,x)
-  include 'j.inc'
-  integer, intent(in) :: i_orb
-  double precision, intent(in) :: x(3)
-  double precision :: dx, dy, dz, r
-  integer :: i
-  double precision, external :: u_gauss
-  dx=x(1)-center(1,i_orb)
-  dy=x(2)-center(2,i_orb)
-  dz=x(3)-center(3,i_orb)
-  r=dsqrt(dx*dx+dy*dy+dz*dz)
-  phi_gaus=u_gauss(i_orb,r)
-  do i=1,npower(1,i_orb)
-    phi_gaus = phi_gaus*dx
-  end do
-  do i=1,npower(2,i_orb)
-    phi_gaus = phi_gaus*dy
-  end do
-  do i=1,npower(3,i_orb)
-    phi_gaus = phi_gaus*dz
-  end do
+  double precision function phi_orb(i_orb,x)
+    use common_data
+    integer, intent(in)            :: i_orb
+    double precision, intent(in)   :: x(3)
+    double precision               :: dx, dy, dz, r
+    integer                        :: i
+    double precision, external     :: u_orb
+    dx=x(1)-center(1,i_orb)
+    dy=x(2)-center(2,i_orb)
+    dz=x(3)-center(3,i_orb)
+    r=dsqrt(dx*dx+dy*dy+dz*dz)
+    phi_orb=u_orb(i_orb,r)
+    do i=1,npower(1,i_orb)
+      phi_orb  = phi_orb *dx
+    end do
+    do i=1,npower(2,i_orb)
+      phi_orb  = phi_orb *dy
+    end do
+    do i=1,npower(3,i_orb)
+      phi_orb  = phi_orb *dz
+    end do
+  end
+
+  double precision function phi_gaus(i_orb,x)
+    use common_data
+    integer, intent(in)            :: i_orb
+    double precision, intent(in)   :: x(3)
+    double precision               :: dx, dy, dz, r
+    integer                        :: i
+    double precision, external     :: u_gauss
+    dx=x(1)-center(1,i_orb)
+    dy=x(2)-center(2,i_orb)
+    dz=x(3)-center(3,i_orb)
+    r=dsqrt(dx*dx+dy*dy+dz*dz)
+    phi_gaus=u_gauss(i_orb,r)
+    do i=1,npower(1,i_orb)
+      phi_gaus = phi_gaus*dx
+    end do
+    do i=1,npower(2,i_orb)
+      phi_gaus = phi_gaus*dy
+    end do
+    do i=1,npower(3,i_orb)
+      phi_gaus = phi_gaus*dz
+    end do
+  end
+
 end

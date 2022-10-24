@@ -1,6 +1,6 @@
 !! u_gauss is the radial part of the end-of-the-day gaussian representation
 double precision function u_gauss(i,r)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i
   double precision, intent(in) :: r
   integer :: mm

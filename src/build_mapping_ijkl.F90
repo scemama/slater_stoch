@@ -6,8 +6,9 @@
 !! KT is expanded as   KT = \sum_{i=1}^ng  c_fit_GTO(i,ng,n)  exp(-g_fit_GTO(i,ng,n) r**2)
 !!
 
-subroutine build_mapping_ijkl
-  include 'j.inc'
+subroutine build_mapping_ijkl(nint_out)
+  use common_data
+  integer, intent(out) :: nint_out
   logical :: logic
   integer :: np, nint_theo
   integer :: kcp, i, j, k, l
@@ -38,7 +39,7 @@ subroutine build_mapping_ijkl
       enddo
     enddo
   enddo
-  nint=kcp
-  if(nint.ne.nint_theo)stop 'pb in build_mapping_ijkl'
+  nint_out=kcp
+  if(nint_out.ne.nint_theo)stop 'pb in build_mapping_ijkl'
 end
 

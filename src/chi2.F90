@@ -1,5 +1,5 @@
 double precision function chi2(i_orb)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i_orb
   integer :: ntot, npts, k
   double precision :: dr, r, u1, u2

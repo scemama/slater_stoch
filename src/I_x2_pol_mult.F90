@@ -8,7 +8,6 @@ recursive subroutine I_x2_pol_mult(c,B_10,B_01,B_00,C_00,D_00,d,nd,dim)
 
 !!  include 'Utils/constants.include.F'
 integer, parameter :: max_dim = 511
-integer, parameter :: N_int_max = 32
 
 double precision, parameter :: pi =  dacos(-1.d0)
 double precision, parameter :: sqpi =  dsqrt(dacos(-1.d0))

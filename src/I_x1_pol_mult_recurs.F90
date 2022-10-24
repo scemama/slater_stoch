@@ -1,4 +1,3 @@
-
 recursive subroutine I_x1_pol_mult_recurs(a,c,B_10,B_01,B_00,C_00,D_00,d,nd,n_pt_in)
   implicit none
 !  BEGIN_DOC
@@ -9,8 +8,6 @@ recursive subroutine I_x1_pol_mult_recurs(a,c,B_10,B_01,B_00,C_00,D_00,d,nd,n_pt
 
 !!  include 'Utils/constants.include.F'
 integer, parameter :: max_dim = 511
-integer, parameter :: SIMD_vector = 32
-integer, parameter :: N_int_max = 32
 
 double precision, parameter :: pi =  dacos(-1.d0)
 double precision, parameter :: sqpi =  dsqrt(dacos(-1.d0))

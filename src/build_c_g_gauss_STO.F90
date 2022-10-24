@@ -1,5 +1,5 @@
 subroutine build_c_g_gauss_STO(i_orb)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i_orb
   integer :: kcp, mm, ii
   kcp=0

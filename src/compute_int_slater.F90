@@ -1,5 +1,5 @@
 subroutine compute_int_slater(i,k,j,l,ijkl_gaus)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i, j, k, l
   double precision, intent(out) :: ijkl_gaus
 

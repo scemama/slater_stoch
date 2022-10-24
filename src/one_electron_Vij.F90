@@ -1,5 +1,5 @@
 double precision function one_electron_Vij(na,ra,gamA,nb,rb,gamB)
-  include 'j.inc'
+  use common_data
 
   integer, intent(in) :: na(3),nb(3)
   double precision, intent(in) :: ra(3),rb(3), gamA, gamB

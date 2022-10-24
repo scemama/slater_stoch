@@ -1,5 +1,5 @@
 subroutine read_fit_SMILES
-include 'j.inc'
+use common_data
 
 c_fit_exp(1, 1)= 0.770925400000000D+00
 g_fit_exp(1, 1)= 0.607017700000000D+00

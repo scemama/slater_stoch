@@ -1,5 +1,5 @@
 subroutine one_elect(i,k,Sij,Vij,Kij)
-  include 'j.inc'
+  use common_data
 
   integer, intent(in)            :: i, k
   double precision, intent(out)  :: Sij, Vij, Kij

@@ -1,5 +1,5 @@
 subroutine build_gaussian_expansion_of_orbitals()
-  include 'j.inc'
+  use common_data
   character(80) :: orb
   integer :: i, j, k, l, m, mm
   integer :: i_atom

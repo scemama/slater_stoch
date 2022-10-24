@@ -12,10 +12,7 @@ subroutine give_polynom_mult_center_x(P_center,Q_center,a_x,d_x,p,q,n_pt_in,pq_i
   double precision, intent(in)   :: P_center, Q_center
   double precision, intent(in)   :: p,q,pq_inv,p10_1,p01_1,p10_2,p01_2,pq_inv_2
 
-!!  include 'Utils/constants.include.F'
 integer, parameter :: max_dim = 511
-integer, parameter :: SIMD_vector = 32
-integer, parameter :: N_int_max = 32
 
 double precision, parameter :: pi =  dacos(-1.d0)
 double precision, parameter :: sqpi =  dsqrt(dacos(-1.d0))

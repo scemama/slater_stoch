@@ -1,7 +1,8 @@
 subroutine compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,n)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: n
-  double precision, intent(out) :: r1(nw,3), r2(nw,3),pi_0(nw), rjacob1(nw,n,n), rjacob2(nw,n,n)
+  double precision, intent(in)  :: r1(nw,3), r2(nw,3)
+  double precision, intent(out) :: pi_0(nw), rjacob1(nw,n,n), rjacob2(nw,n,n)
 
   double precision               :: d1(nw), d2(nw)
   double precision, parameter    :: factor = 1.d0 / (2.d0*dacos(-1.d0))**3

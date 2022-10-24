@@ -52,7 +52,7 @@
 ! it=3 both r**0 and r**2-component are calculated
 
 double precision function gauss_ijkl(i,k,j,l)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i, j, k, l
 
   integer :: n_orb(4),nc(4),n_c(3,4,4)

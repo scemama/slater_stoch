@@ -1,5 +1,5 @@
 subroutine read_geometry(MOLECULE)
-  include 'j.inc'
+  use common_data
   character(80), intent(in) :: MOLECULE
   character(80) charabid,filename
 

@@ -1,5 +1,5 @@
 program integrals
-  include 'j.inc'
+  use common_data
 #ifdef HAVE_MPI
   include 'mpif.h'
 #endif
@@ -56,7 +56,7 @@ program integrals
   integer*4                      :: put(33)
 
   integer                        :: i_rand, num_simulation, npts_two_elec
-  integer                        :: i, j, k, l, k_sort, k_sort2, kkk, kcp, ll
+  integer                        :: i, j, k, l, k_sort2, kkk, kcp, ll
   integer                        :: nint_zero, i_value, n_zero_cauchy, num
   integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
   double precision               :: aread, t0, t1, factor, r2_mod, r1_mod, r12_2
@@ -74,8 +74,6 @@ program integrals
   allocate(rho_G(nw,nbasis_max*nbasis_max,2))
   allocate(weight_G(nw),weight_kin_G(nw))
 
-  mpi_rank = 0
-  mpi_size = 1
   ijkl = 0.d0
   ijkl2 = 0.d0
 
@@ -83,8 +81,10 @@ program integrals
   call mpi_init(ierr)
   call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
   call MPI_COMM_SIZE (MPI_COMM_WORLD, mpi_size, ierr)
-  call sleep(mpi_rank/20.)
   if(mpi_rank.eq.0)write(*,*)'mpi_size=',mpi_size
+#else
+  mpi_rank = 0
+  mpi_size = 1
 #endif
 
   write(filename_in,'(A4)') 'j_in'
@@ -157,7 +157,7 @@ program integrals
 
   !! build arrays is(kcp),js(kcp),ks(kcp),ls(kcp) and kcp_ijkl(i,j,k,l) ;  kcp=1,nint and  i=1,nbasis (idem for j,k,l)
   !! nint= total number of two-electron integrals
-  call build_mapping_ijkl
+  call build_mapping_ijkl(nint)
 
   if(mpi_rank.eq.0)print*,'**************************************************************************'
   if(mpi_rank.eq.0)print*,'Analytic calculation of APPROXIMATE GAUSSIAN one-electron integrals for ZV'
@@ -167,7 +167,6 @@ program integrals
   nint_zero=0
   i_value=1
   n_zero_cauchy=0
-  k_sort=0
   call cpu_time(t0)
   kkk=0
 
@@ -180,7 +179,9 @@ program integrals
   if(mpi_rank.eq.0)print*,'ANALYTIC CALCULATION OF APPROXIMATE GAUSSIAN TWO-ELECTRON INTREGRALS'
   if(mpi_rank.eq.0)print*,'********************************************************************'
 
-  if(mpi_rank.eq.0)call count_multi_center_integrals
+  if (mpi_rank == 0) then
+    call count_multi_center_integrals
+  end if
 
   do i=1,nbasis
     do k=1,nbasis
@@ -188,7 +189,6 @@ program integrals
     enddo
   enddo
 
-  k_sort=0
   k_sort2=0
   nint_zero=0
   i_value=1
@@ -209,23 +209,21 @@ program integrals
 
     if(dsqrt(precond(i,k)*precond(j,l)).lt.seuil_cauchy)then
       n_zero_cauchy=n_zero_cauchy+1
-      ijkl_gaus(kcp)=0.d0
     else
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
     endif
 
-    k_sort=k_sort+1
-    if( nint.ge.10.and.mod(k_sort,nint/10).eq.0)then
+    if( nint.ge.10.and.mod(kcp,nint/10).eq.0)then
       kkk=kkk+1
       call cpu_time(t1)
       write(*,'(a,i3,a,f22.15)')' CPU TIME block',kkk,' of GAUSSIAN TWO-electron',t1-t0
       t0=t1
-      k_sort=0
     endif
 
   enddo !kcp
 
 #ifdef HAVE_MPI
+  call mpi_allreduce(MPI_IN_PLACE,n_zero_cauchy, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
   call mpi_allreduce(MPI_IN_PLACE,ijkl_gaus, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 #endif
 
@@ -255,7 +253,7 @@ program integrals
   !!******************
   !!
   call cpu_time(t0)
-  call build_mapping_ijkl
+  call build_mapping_ijkl(nint)
 
   do i=1,nbasis
     do k=1,nbasis
@@ -342,13 +340,12 @@ program integrals
       e_test_ijkl(kcp)=0.d0
     enddo
 
-    k_sort=0
     k_sort2=0
 
     call cpu_time(t1)
     do kk=1,npts_two_elec/nw
 
-      call draw_configuration(r1,r2)
+      call draw_configuration(r1,r2,nw)
       do k=1,nbasis
         do i=k,nbasis
           if(i_tab_mc(i,k).eq.1)then
@@ -402,11 +399,9 @@ program integrals
         endif
       enddo !kcp
 
-      k_sort=k_sort+1
       k_sort2=k_sort2+nw
-      if( npts_two_elec.ge.10.and.mod(k_sort,npts_two_elec/10).eq.0)then
+      if( npts_two_elec.ge.10.and.mod(kcp,npts_two_elec/10).eq.0)then
         write(*,*)'mpi_rank= ',mpi_rank,' nsteps=',k_sort2
-        k_sort=0
       endif
 
     enddo !npts_two_elec

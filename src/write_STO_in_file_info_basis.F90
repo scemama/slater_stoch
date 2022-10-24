@@ -1,5 +1,5 @@
 subroutine write_STO_in_file_info_basis(i_orb)
-  include 'j.inc'
+  use common_data
   integer, intent(in) :: i_orb
 
   integer :: mm

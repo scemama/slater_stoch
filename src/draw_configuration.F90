@@ -1,8 +1,7 @@
-subroutine draw_configuration(r1,r2)
-  include 'j.inc'
+subroutine draw_configuration(r1,r2,nw)
   double precision, intent(out) :: r1(nw,3),r2(nw,3)
-  double precision, parameter    :: f = dsqrt(2.d0)
-  double precision, external :: dierfc
+  double precision, parameter   :: f = dsqrt(2.d0)
+  double precision, external    :: dierfc
   integer :: kw, ll
   call random_number(r1)
   call random_number(r2)
