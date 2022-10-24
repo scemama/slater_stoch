@@ -17,6 +17,8 @@ subroutine read_basis(filename_basis)
   !! u_GTO(r) = sum_i c_i exp(-gi r**2)
   !! g_i and c_i  gamma_b(k,m,i),coef_b(k,m,i) m=1,n_cont_b(k,i)
 
+  call allocate_basis
+
   open(1,file=filename_basis)
   do i=1,n_atoms_max
     n_b(i)=0

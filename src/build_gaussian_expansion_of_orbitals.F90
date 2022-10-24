@@ -10,7 +10,6 @@ subroutine build_gaussian_expansion_of_orbitals()
   open(22,file='orbital_coefficients_gaussian_expansion')
   open(23,file='info_simplified')
 
-
   call read_fit_SMILES
 
   nbasis=0

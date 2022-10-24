@@ -13,7 +13,7 @@ subroutine write_STO_in_file_info_basis(i_orb)
   enddo
   write(21,'(a,e22.15)')'chi2 (STO orbital and its gaussian representation)= ',chi2(i_orb)
   write(21,*)
-  write(22,'(i4,i3)')i_orb,n_gauss(i_orb)
+  write(22,'(i5, x, i5)')i_orb,n_gauss(i_orb)
   write(22,'(4e22.15)')(c_gauss(1,mm,i_orb),mm=1,n_gauss(i_orb))
   write(22,'(4e22.15)')(c_gauss(2,mm,i_orb),mm=1,n_gauss(i_orb))
   write(22,'(4e22.15)')(g_gauss(mm,i_orb)  ,mm=1,n_gauss(i_orb))

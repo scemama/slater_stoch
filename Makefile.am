@@ -5,6 +5,7 @@ bin_PROGRAMS = one_e_slater two_e_slater
 COMMON_SOURCE = \
  src/common_data.F90 \
  src/add_poly_multiply.F90 \
+ src/allocate_basis.F90 \
  src/bielec_integral.F90 \
  src/bigF.F90 \
  src/binom_func.F90 \

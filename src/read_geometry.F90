@@ -13,7 +13,9 @@ subroutine read_geometry(MOLECULE)
 
   open(2,file=filename)
   read(2,*)number_nuclei
-  if(number_nuclei.gt.number_nuclei_max)stop 'increase number_nuclei_max'
+  allocate(ATOM(number_nuclei))
+  allocate(centers_nuclei(3,number_nuclei))
+  allocate(charge(number_nuclei))
   read(2,'(a80)')charabid
 
   do i=1,number_nuclei
