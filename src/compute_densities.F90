@@ -1,10 +1,18 @@
 subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
   include 'j.inc'
-  dimension ut1(3,nw,nbasis_max*nbasis_max)
-  dimension ut2(3,nw,nbasis_max*nbasis_max)
-  dimension rho  (nw,nbasis_max*nbasis_max,2)
-  dimension poly  (nw,nbasis_max*nbasis_max,2)
-  dimension rho_G(nw,nbasis_max*nbasis_max,2)
+  integer, intent(in) :: i, k
+  double precision, intent(in)  :: ut1(3,nw,nbasis_max*nbasis_max)
+  double precision, intent(in)  :: ut2(3,nw,nbasis_max*nbasis_max)
+  double precision, intent(out) :: rho  (nw,nbasis_max*nbasis_max,2)
+  double precision, intent(out) :: poly  (nw,nbasis_max*nbasis_max,2)
+  double precision, intent(out) :: rho_G(nw,nbasis_max*nbasis_max,2)
+
+  integer :: ik, kw, kk
+
+  double precision :: dx, dy, dz, poly_i, poly_k, r_i, r_k, poly_ik, r_ik
+
+  double precision, external :: u_orb, u_gauss, phi_orb, phi_gaus
+
   ik = (k-1)*nbasis_max+i
   do kw=1,nw
     dx=ut1(1,kw,ik)-center(1,i)
@@ -52,7 +60,11 @@ end
 
 double precision function phi_orb(i_orb,x)
   include 'j.inc'
-  dimension x(3)
+  integer, intent(in) :: i_orb
+  double precision, intent(in) :: x(3)
+  double precision :: dx, dy, dz, r
+  integer :: i
+  double precision, external :: u_orb
   dx=x(1)-center(1,i_orb)
   dy=x(2)-center(2,i_orb)
   dz=x(3)-center(3,i_orb)
@@ -71,7 +83,11 @@ end
 
 double precision function phi_gaus(i_orb,x)
   include 'j.inc'
-  dimension x(3)
+  integer, intent(in) :: i_orb
+  double precision, intent(in) :: x(3)
+  double precision :: dx, dy, dz, r
+  integer :: i
+  double precision, external :: u_gauss
   dx=x(1)-center(1,i_orb)
   dy=x(2)-center(2,i_orb)
   dz=x(3)-center(3,i_orb)

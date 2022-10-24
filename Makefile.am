@@ -66,8 +66,6 @@ two_e_slater_SOURCES = $(COMMON_SOURCE) \
  src/compute_int_slater.F90 \
  src/compute_jacobian_and_pi0.F90 \
  src/compute_lmin_lmax.F90 \
- src/compute_r_tilde.F90 \
- src/compute_u_tilde.F90 \
  src/count_multi_center_integrals.F90 \
  src/dierfc.F90 \
  src/draw_configuration.F90 \

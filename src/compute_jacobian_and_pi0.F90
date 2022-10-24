@@ -1,8 +1,13 @@
 subroutine compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,n)
   include 'j.inc'
-  double precision               :: r1(nw,3), r2(nw,3),pi_0(nw), rjacob1(nw,n,n), rjacob2(nw,n,n)
+  integer, intent(in) :: n
+  double precision, intent(out) :: r1(nw,3), r2(nw,3),pi_0(nw), rjacob1(nw,n,n), rjacob2(nw,n,n)
+
   double precision               :: d1(nw), d2(nw)
   double precision, parameter    :: factor = 1.d0 / (2.d0*dacos(-1.d0))**3
+  double precision :: factor_ik, f1, f2
+  double precision :: r1_mod_2, r2_mod_2
+  integer :: kw, k, i
   do kw=1,nw
     r1_mod_2=r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3)
     r2_mod_2=r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3)

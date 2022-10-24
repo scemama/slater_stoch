@@ -19,16 +19,16 @@
 !
 !
 double precision function bigF(n12,g12,n34,g34,l)
-implicit none
-integer n12,n34,l,l12,l34
-double precision g12,g34,g,first_term,smallg,fact
+  implicit none
+  integer :: n12,n34,l,l12,l34
+  double precision :: g12,g34,g,first_term,smallg,fact
 
-l12=-l
-l34=l+1
-g=g12+g34
+  l12=-l
+  l34=l+1
+  g=g12+g34
 
-first_term= fact(n34+l34-1)/g34**(n34+l34)*fact(n12+l12-1)/g12**(n12+l12)
+  first_term= fact(n34+l34-1)/g34**(n34+l34)*fact(n12+l12-1)/g12**(n12+l12)
 
-bigF=first_term+ smallg(n34,n12,g34,g,l12-1)-smallg(n34,n12,g34,g,l34-1)
+  bigF=first_term+ smallg(n34,n12,g34,g,l12-1)-smallg(n34,n12,g34,g,l34-1)
 end
 

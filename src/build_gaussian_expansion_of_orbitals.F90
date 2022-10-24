@@ -1,6 +1,10 @@
 subroutine build_gaussian_expansion_of_orbitals()
   include 'j.inc'
-  character*80,orb
+  character(80) :: orb
+  integer :: i, j, k, l, m, mm
+  integer :: i_atom
+
+  integer, external :: number_atom
 
   open(21,file='info_basis')
   open(22,file='orbital_coefficients_gaussian_expansion')

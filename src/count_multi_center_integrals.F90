@@ -1,5 +1,7 @@
 subroutine count_multi_center_integrals
   include 'j.inc'
+  integer :: iac_1, iac_2, iac_3, iac_4, kcp
+  integer :: i, j, k, l, ndiff
 
   iac_1=0
   iac_2=0

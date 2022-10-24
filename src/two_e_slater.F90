@@ -4,25 +4,27 @@ program integrals
   include 'mpif.h'
 #endif
 
-  character*80,charabid
-  character*80,MOLECULE
+  double precision, parameter    :: seuil_cauchy = 1.d-15
 
-  double precision precond(nbasis_max,nbasis_max)
+  character(80)                  :: charabid, MOLECULE
+
+  double precision               :: precond(nbasis_max,nbasis_max)
 
   !! BEGIN BIG ARRAYS nint_max
-  double precision ijkl_gaus(nint_max)
-  double precision ijkl(nint_max),ijkl2(nint_max)
+  double precision               :: ijkl_gaus(nint_max)
+  double precision               :: ijkl(nint_max),ijkl2(nint_max)
 
-  dimension e_S_ijkl(nint_max)
-  dimension e_G_ijkl(nint_max)
-  dimension e_test_ijkl(nint_max)
-  dimension error_ijkl(nint_max)
-  dimension mono_center(nint_max)
-  double precision moy(nint_max), moy2(nint_max), moy2t(nint_max), Kij
+  double precision               :: e_S_ijkl(nint_max)
+  double precision               :: e_G_ijkl(nint_max)
+  double precision               :: e_test_ijkl(nint_max)
+  double precision               :: error_ijkl(nint_max)
+  double precision               :: mono_center(nint_max)
+  double precision               :: moy(nint_max), moy2(nint_max), moy2t(nint_max)
+  double precision               :: Sij, Vij, Kij
   !! END BIG ARRAYS nint_max
 
   !! MONTE CARLO PART
-  integer i_tab_mc(nbasis_max,nbasis_max)
+  integer                        :: i_tab_mc(nbasis_max,nbasis_max)
   double precision               :: d_x(4)
 
   double precision, allocatable  :: r12_inv(:),r1(:,:),r2(:,:)
@@ -36,35 +38,44 @@ program integrals
   double precision, allocatable  :: rjacob(:), rjacob1(:,:,:), rjacob2(:,:,:)
   double precision, allocatable  :: pi_1(:)
 
-  character*(128)                :: filename_in
-  character*(128)                :: filename_out_gaus_ijkl
-  character*(128)                :: filename_out_ijkl
-  character*(128)                :: filename_basis
+  character(128)                 :: filename_in
+  character(128)                 :: filename_out_gaus_ijkl
+  character(128)                 :: filename_out_ijkl
+  character(128)                 :: filename_basis
 
-  integer mpi_rank
+  integer                        :: mpi_rank, mpi_size
 
 #ifdef HAVE_MPI
-  integer ierr, mpi_size, irequest
-  integer, dimension(MPI_STATUS_SIZE) :: mpi_status
-  logical mpi_flag
-  double precision mpi_size_inv
+  integer                        :: ierr, irequest
+  integer                        :: mpi_status(MPI_STATUS_SIZE)
+  logical                        :: mpi_flag
+  double precision               :: mpi_size_inv
 #endif
 
   integer*4                      :: seed(33)
   integer*4                      :: put(33)
 
-  ! call getarg(1,filename_in)
+  integer                        :: i_rand, num_simulation, npts_two_elec
+  integer                        :: i, j, k, l, k_sort, k_sort2, kkk, kcp, ll
+  integer                        :: nint_zero, i_value, n_zero_cauchy, num
+  integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
+  double precision               :: aread, t0, t1, factor, r2_mod, r1_mod, r12_2
+  double precision               :: e_tot_ijkl, error_max, errmoy_ijkl, dmoy_ijkl
+  double precision               :: a_ijkln, diff_ijkl, diff_ijklmax
+
+  double precision, external     :: gauss_ijkl
+
 
   allocate(r12_inv(nw),r1(nw,3),r2(nw,3))
   allocate(pi_0(nw),pot(nw),rkin(nw),rkin_G(nw))
-  allocate(rt1(nw,3),rt2(nw,3))
   allocate(ut1(3,nw,nbasis_max*nbasis_max),ut2(3,nw,nbasis_max*nbasis_max))
   allocate(rho(nw,nbasis_max*nbasis_max,2),poly(nw,nbasis_max*nbasis_max,2))
   allocate(weight(nw),weight_kin(nw) )
   allocate(rho_G(nw,nbasis_max*nbasis_max,2))
   allocate(weight_G(nw),weight_kin_G(nw))
 
-  mpi_rank=0
+  mpi_rank = 0
+  mpi_size = 1
   ijkl = 0.d0
   ijkl2 = 0.d0
 
@@ -72,7 +83,7 @@ program integrals
   call mpi_init(ierr)
   call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
   call MPI_COMM_SIZE (MPI_COMM_WORLD, mpi_size, ierr)
-  call sleep(mpi_rank/20)
+  call sleep(mpi_rank/20.)
   if(mpi_rank.eq.0)write(*,*)'mpi_size=',mpi_size
 #endif
 
@@ -153,7 +164,6 @@ program integrals
   if(mpi_rank.eq.0)print*,'**************************************************************************'
 
   call cpu_time(t0)
-  seuil_cauchy=1.d-15
   nint_zero=0
   i_value=1
   n_zero_cauchy=0
@@ -185,7 +195,6 @@ program integrals
 
   n_zero_cauchy=0
   nint_zero=0
-  seuil_cauchy=1.d-15
 
   call cpu_time(t0)
 
@@ -343,8 +352,15 @@ program integrals
       do k=1,nbasis
         do i=k,nbasis
           if(i_tab_mc(i,k).eq.1)then
-            call compute_r_tilde(i,k,r1,r2,rt1,rt2)
-            call compute_u_tilde(i,k,rt1,rt2,ut1,ut2)
+            ik = (k-1)*nbasis_max+i
+            factor = 0.5d0 * a_ZV(i,k) /(g_min(i)+g_min(k))
+            do kw=1,nw
+              r1_mod=dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
+              r2_mod=dsqrt(r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3))
+              ut1(1:3,kw,ik)= factor*r1(kw,1:3) * r1_mod + G_center(1:3,i,k)
+              ut2(1:3,kw,ik)= factor*r2(kw,1:3) * r2_mod + G_center(1:3,i,k)
+            enddo !!kw
+
             call compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
           endif
         enddo !k
@@ -385,7 +401,6 @@ program integrals
 
         endif
       enddo !kcp
-
 
       k_sort=k_sort+1
       k_sort2=k_sort2+nw

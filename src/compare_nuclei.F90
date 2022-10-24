@@ -1,5 +1,7 @@
 subroutine compare_nuclei(ni,nj,nk,nl,ndiff)
-  implicit double precision (a-h,o-z)
+  implicit none
+  integer, intent(in)            :: ni, nj, nk, nl
+  integer, intent(out)           :: ndiff
 
   ! 1111
   if( (ni.eq.nj).and.(nj.eq.nk).and.(nk.eq.nl) ) then

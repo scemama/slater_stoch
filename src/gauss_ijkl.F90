@@ -53,9 +53,15 @@
 
 double precision function gauss_ijkl(i,k,j,l)
   include 'j.inc'
+  integer, intent(in) :: i, j, k, l
 
-  !! local arrays:
-  dimension n_orb(4),nc(4),d(n_gauss_max,4,4),n_c(3,4,4)
+  integer :: n_orb(4),nc(4),n_c(3,4,4)
+  integer :: i_o, kk, m, ii, ll, i1, i2, i3, i4, ii1, ii2, ii3, ii4
+
+  double precision :: d(n_gauss_max,4,4)
+  double precision :: rint
+
+  double precision, external :: bielec_integral
 
   n_orb(1)=i
   n_orb(2)=k

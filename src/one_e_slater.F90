@@ -1,21 +1,22 @@
 program one_e_integrals
   include 'j.inc'
 
-  character*80,charabid
-  character*80,MOLECULE
+  character(80) :: charabid
+  character(80) :: MOLECULE
 
-  ! Arrays for one-electron integrals
-  double precision S_ij_STO_ex(nbasis_max,nbasis_max),               &
-      V_ij_STO_ex(nbasis_max,nbasis_max),                            &
-      K_ij_STO_ex(nbasis_max,nbasis_max)
-  double precision Kij
+  double precision :: S_ij_STO_ex(nbasis_max,nbasis_max)
+  double precision :: V_ij_STO_ex(nbasis_max,nbasis_max)
+  double precision :: K_ij_STO_ex(nbasis_max,nbasis_max)
 
-  !! MONTE CARLO PART
-  character*(128)                :: filename_in
-  character*(128)                :: filename_out_s_ex
-  character*(128)                :: filename_out_v_ex
-  character*(128)                :: filename_out_k_ex
-  character*(128)                :: filename_basis
+  double precision :: Sij, Vij, Kij
+
+  character(128) :: filename_in
+  character(128) :: filename_out_s_ex
+  character(128) :: filename_out_v_ex
+  character(128) :: filename_out_k_ex
+  character(128) :: filename_basis
+
+  integer :: i, k
 
   write(filename_in,'(A4)') 'j_in'
 

@@ -1,11 +1,11 @@
 double precision function binom_func(i,j)
   implicit none
-  !EGIN_DOC
+  !BEGIN_DOC
   !.. math                       ::
   !
   !  \frac{i!}{j!(i-j)!}
   !
-  !ND_DOC
+  !END_DOC
   integer,intent(in)             :: i,j
   double precision               :: logfact
   integer, save                  :: ifirst

@@ -1,5 +1,7 @@
 subroutine build_c_g_gauss_STO(i_orb)
   include 'j.inc'
+  integer, intent(in) :: i_orb
+  integer :: kcp, mm, ii
   kcp=0
   do mm=1,n_contract(i_orb)
     if(i_type(i_orb).eq.1)then
@@ -22,7 +24,7 @@ subroutine build_c_g_gauss_STO(i_orb)
     if(i_type(i_orb).eq.3)stop 'i_type=3 not yet coded!'
   enddo !mm
   n_gauss(i_orb)=kcp
-  
+
 end
 
 
