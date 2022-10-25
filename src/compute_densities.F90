@@ -1,11 +1,11 @@
 subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
   use common_data
   integer, intent(in) :: i, k
-  double precision, intent(in)  :: ut1(3,nw,nbasis_max*nbasis_max)
-  double precision, intent(in)  :: ut2(3,nw,nbasis_max*nbasis_max)
-  double precision, intent(out) :: rho  (nw,nbasis_max*nbasis_max,2)
-  double precision, intent(out) :: poly  (nw,nbasis_max*nbasis_max,2)
-  double precision, intent(out) :: rho_G(nw,nbasis_max*nbasis_max,2)
+  double precision, intent(in)  :: ut1(nw,3,nbasis*nbasis)
+  double precision, intent(in)  :: ut2(nw,3,nbasis*nbasis)
+  double precision, intent(out) :: rho  (nw,nbasis*nbasis,2)
+  double precision, intent(out) :: poly  (nw,nbasis*nbasis,2)
+  double precision, intent(out) :: rho_G(nw,nbasis*nbasis,2)
 
   integer :: ik, kw, kk
 
@@ -13,11 +13,11 @@ subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
 
   double precision, external :: u_orb, u_gauss
 
-  ik = (k-1)*nbasis_max+i
+  ik = (k-1)*nbasis+i
   do kw=1,nw
-    dx=ut1(1,kw,ik)-center(1,i)
-    dy=ut1(2,kw,ik)-center(2,i)
-    dz=ut1(3,kw,ik)-center(3,i)
+    dx=ut1(kw,1,ik)-center(1,i)
+    dy=ut1(kw,2,ik)-center(2,i)
+    dz=ut1(kw,3,ik)-center(3,i)
 
     poly_i=1.d0
     do kk=1,npower(1,i)
@@ -31,9 +31,9 @@ subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
     enddo
     r_i=dsqrt(dx*dx+dy*dy+dz*dz)
 
-    dx=ut1(1,kw,ik)-center(1,k)
-    dy=ut1(2,kw,ik)-center(2,k)
-    dz=ut1(3,kw,ik)-center(3,k)
+    dx=ut1(kw,1,ik)-center(1,k)
+    dy=ut1(kw,2,ik)-center(2,k)
+    dz=ut1(kw,3,ik)-center(3,k)
 
     poly_k=1.d0
     do kk=1,npower(1,k)
@@ -53,9 +53,9 @@ subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
     rho_G(kw,ik,1)=poly_ik*u_gauss(i,r_i)*u_gauss(k,r_k)
 
 
-    dx=ut2(1,kw,ik)-center(1,i)
-    dy=ut2(2,kw,ik)-center(2,i)
-    dz=ut2(3,kw,ik)-center(3,i)
+    dx=ut2(kw,1,ik)-center(1,i)
+    dy=ut2(kw,2,ik)-center(2,i)
+    dz=ut2(kw,3,ik)-center(3,i)
 
     poly_i=1.d0
     do kk=1,npower(1,i)
@@ -69,9 +69,9 @@ subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
     enddo
     r_i=dsqrt(dx*dx+dy*dy+dz*dz)
 
-    dx=ut2(1,kw,ik)-center(1,k)
-    dy=ut2(2,kw,ik)-center(2,k)
-    dz=ut2(3,kw,ik)-center(3,k)
+    dx=ut2(kw,1,ik)-center(1,k)
+    dy=ut2(kw,2,ik)-center(2,k)
+    dz=ut2(kw,3,ik)-center(3,k)
 
     poly_k=1.d0
     do kk=1,npower(1,k)

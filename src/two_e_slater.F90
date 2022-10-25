@@ -67,10 +67,6 @@ program integrals
   double precision, external     :: gauss_ijkl
 
 
-  allocate(ut1(3,nw,nbasis_max*nbasis_max),ut2(3,nw,nbasis_max*nbasis_max))
-  allocate(rho(nw,nbasis_max*nbasis_max,2),poly(nw,nbasis_max*nbasis_max,2))
-  allocate(rho_G(nw,nbasis_max*nbasis_max,2))
-
 #ifdef HAVE_MPI
   call mpi_init(ierr)
   call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
@@ -148,6 +144,10 @@ program integrals
   if(mpi_rank.eq.0)write(*,*)'Number of basis functions ',nbasis
 
   allocate(rjacob(nw),rjacob1(nw,nbasis,nbasis),rjacob2(nw,nbasis,nbasis))
+  allocate(ut1(nw,3,nbasis*nbasis),ut2(nw,3,nbasis*nbasis))
+  allocate(rho(nw,nbasis*nbasis,2),poly(nw,nbasis*nbasis,2))
+  allocate(rho_G(nw,nbasis*nbasis,2))
+
 
   !! build arrays is(kcp),js(kcp),ks(kcp),ls(kcp) ;  kcp=1,nint and  i=1,nbasis (idem for j,k,l)
   !! nint= total number of two-electron integrals
@@ -357,13 +357,13 @@ program integrals
       do k=1,nbasis
         do i=k,nbasis
           if(i_tab_mc(i,k).eq.1)then
-            ik = (k-1)*nbasis_max+i
+            ik = (k-1)*nbasis+i
             factor = 0.5d0 * a_ZV(i,k) /(g_slater(i)+g_slater(k))
             do kw=1,nw
               r1_mod=dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
               r2_mod=dsqrt(r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3))
-              ut1(1:3,kw,ik)= factor*r1(kw,1:3) * r1_mod + G_center(1:3,i,k)
-              ut2(1:3,kw,ik)= factor*r2(kw,1:3) * r2_mod + G_center(1:3,i,k)
+              ut1(kw,1:3,ik)= factor*r1(kw,1:3) * r1_mod + G_center(1:3,i,k)
+              ut2(kw,1:3,ik)= factor*r2(kw,1:3) * r2_mod + G_center(1:3,i,k)
             enddo !!kw
 
             call compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
@@ -377,10 +377,10 @@ program integrals
 
         i=is(kcp)
         k=ks(kcp)
-        ik = (k-1)*nbasis_max+i
+        ik = (k-1)*nbasis+i
         j=js(kcp)
         l=ls(kcp)
-        jl = (l-1)*nbasis_max+j
+        jl = (l-1)*nbasis+j
 
         if(dsqrt(precond(i,k)*precond(j,l)).lt.seuil_cauchy)then
 
@@ -390,9 +390,9 @@ program integrals
 
           rjacob(1:nw) = rjacob1(1:nw,i,k)*rjacob2(1:nw,j,l)
           do kw=1,nw
-            d_x(1) = ut1(1,kw,ik)-ut2(1,kw,jl)
-            d_x(2) = ut1(2,kw,ik)-ut2(2,kw,jl)
-            d_x(3) = ut1(3,kw,ik)-ut2(3,kw,jl)
+            d_x(1) = ut1(kw,1,ik)-ut2(kw,1,jl)
+            d_x(2) = ut1(kw,2,ik)-ut2(kw,2,jl)
+            d_x(3) = ut1(kw,3,ik)-ut2(kw,3,jl)
             r12_2 = d_x(1)*d_x(1) + d_x(2)*d_x(2) + d_x(3)*d_x(3)
             factor=rjacob(kw)/pi_0(kw)
             weight  (kw)=factor* rho  (kw,ik,1)*rho  (kw,jl,2)

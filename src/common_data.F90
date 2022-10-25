@@ -1,8 +1,6 @@
 module common_data
   implicit none
 
-  integer, parameter             :: nbasis_max=100     ! Max number of basis functions
-
   integer, parameter             :: nw=40              ! Number of independent walkers for the stochastic calculations
 
   ! Gaussian fits
