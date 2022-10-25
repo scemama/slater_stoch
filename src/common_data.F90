@@ -45,7 +45,6 @@ module common_data
   integer, allocatable           :: n_gauss(:)                        ! Number of Gaussians used to fit an STO
   double precision, allocatable  :: center(:,:)                       ! Where the basis functions are centered
 
-  double precision               :: G_center(3,nbasis_max,nbasis_max)        ! Centers of Gaussian products
   double precision               :: gamma_b(nbasis_max,n_contract_max,n_atoms_max) ! Exponent in basis
   double precision               :: coef_b(nbasis_max,n_contract_max,n_atoms_max)  ! Contraction coefficient in basis
   double precision               :: a_ZV(nbasis_max,nbasis_max)              ! Zero-variance parameter

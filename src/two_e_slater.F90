@@ -19,6 +19,7 @@ program integrals
   double precision, allocatable  :: error_ijkl(:)
   double precision, allocatable  :: mono_center(:)
   double precision, allocatable  :: moy(:), moy2(:), moy2t(:)
+  double precision, allocatable  :: G_center(:,:,:)
 
   double precision               :: Sij, Vij, Kij
 
@@ -288,6 +289,7 @@ program integrals
     if(mod(npts_two_elec,nw).ne.0)stop 'npts_two_elec must be a multiple of nw'
   endif
 
+  allocate(G_center(3, nbasis, nbasis))
   do i=1,nbasis
     do j=1,nbasis
       do ll=1,3
