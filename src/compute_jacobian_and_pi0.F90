@@ -18,7 +18,7 @@ subroutine compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,n)
   enddo
   do k=1,n
     do i=k,n
-      factor_ik = a_ZV(i,k)/(g_min(i)+g_min(k))
+      factor_ik = a_ZV(i,k)/(g_slater(i)+g_slater(k))
       do kw=1,nw
         f1=factor_ik*d1(kw)
         rjacob1(kw,i,k)=0.25d0*dabs(f1*f1*f1)

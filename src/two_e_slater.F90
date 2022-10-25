@@ -8,33 +8,33 @@ program integrals
 
   character(80)                  :: charabid, MOLECULE
 
-  double precision               :: precond(nbasis_max,nbasis_max)
+  double precision, allocatable  :: precond(:,:)
 
-  !! BEGIN BIG ARRAYS nint_max
-  double precision               :: ijkl_gaus(nint_max)
-  double precision               :: ijkl(nint_max),ijkl2(nint_max)
+  double precision, allocatable  :: ijkl_gaus(:)
+  double precision, allocatable  :: ijkl(:),ijkl2(:)
 
-  double precision               :: e_S_ijkl(nint_max)
-  double precision               :: e_G_ijkl(nint_max)
-  double precision               :: e_test_ijkl(nint_max)
-  double precision               :: error_ijkl(nint_max)
-  double precision               :: mono_center(nint_max)
-  double precision               :: moy(nint_max), moy2(nint_max), moy2t(nint_max)
+  double precision, allocatable  :: e_S_ijkl(:)
+  double precision, allocatable  :: e_G_ijkl(:)
+  double precision, allocatable  :: e_test_ijkl(:)
+  double precision, allocatable  :: error_ijkl(:)
+  double precision, allocatable  :: mono_center(:)
+  double precision, allocatable  :: moy(:), moy2(:), moy2t(:)
+
   double precision               :: Sij, Vij, Kij
-  !! END BIG ARRAYS nint_max
 
   !! MONTE CARLO PART
-  integer                        :: i_tab_mc(nbasis_max,nbasis_max)
+  integer, allocatable           :: i_tab_mc(:,:)
   double precision               :: d_x(4)
 
-  double precision, allocatable  :: r12_inv(:),r1(:,:),r2(:,:)
-  double precision, allocatable  :: pi_0(:),pot(:),rkin(:),rkin_G(:)
+  double precision               :: r12_inv(nw), r1(nw,3), r2(nw,3)
+  double precision               :: pi_0(nw),pot(nw),rkin(nw),rkin_G(nw)
+  double precision               :: weight(nw),weight_kin(nw)
+  double precision               :: weight_G(nw),weight_kin_G(nw)
+
   double precision, allocatable  :: rt1(:,:),rt2(:,:)
   double precision, allocatable  :: ut1(:,:,:),ut2(:,:,:)
   double precision, allocatable  :: rho(:,:,:),poly(:,:,:)
-  double precision, allocatable  :: weight(:),weight_kin(:)
   double precision, allocatable  :: rho_G(:,:,:)
-  double precision, allocatable  :: weight_G(:),weight_kin_G(:)
   double precision, allocatable  :: rjacob(:), rjacob1(:,:,:), rjacob2(:,:,:)
   double precision, allocatable  :: pi_1(:)
 
@@ -66,16 +66,9 @@ program integrals
   double precision, external     :: gauss_ijkl
 
 
-  allocate(r12_inv(nw),r1(nw,3),r2(nw,3))
-  allocate(pi_0(nw),pot(nw),rkin(nw),rkin_G(nw))
   allocate(ut1(3,nw,nbasis_max*nbasis_max),ut2(3,nw,nbasis_max*nbasis_max))
   allocate(rho(nw,nbasis_max*nbasis_max,2),poly(nw,nbasis_max*nbasis_max,2))
-  allocate(weight(nw),weight_kin(nw) )
   allocate(rho_G(nw,nbasis_max*nbasis_max,2))
-  allocate(weight_G(nw),weight_kin_G(nw))
-
-  ijkl = 0.d0
-  ijkl2 = 0.d0
 
 #ifdef HAVE_MPI
   call mpi_init(ierr)
@@ -143,11 +136,11 @@ program integrals
   ! END READ INPUT
   !*****************
 
-  call read_basis(filename_basis)
   if(mpi_rank.eq.0)print*,'READING geometry in angstrom'
   call read_geometry(MOLECULE)
   if(mpi_rank.eq.0)print*,'ENUCL=',enucl
 
+  call read_basis(filename_basis)
   call build_gaussian_expansion_of_orbitals(mpi_rank)
 
   if(mpi_rank.eq.0)write(*,*)'**********************************'
@@ -155,9 +148,21 @@ program integrals
 
   allocate(rjacob(nw),rjacob1(nw,nbasis,nbasis),rjacob2(nw,nbasis,nbasis))
 
-  !! build arrays is(kcp),js(kcp),ks(kcp),ls(kcp) and kcp_ijkl(i,j,k,l) ;  kcp=1,nint and  i=1,nbasis (idem for j,k,l)
+  !! build arrays is(kcp),js(kcp),ks(kcp),ls(kcp) ;  kcp=1,nint and  i=1,nbasis (idem for j,k,l)
   !! nint= total number of two-electron integrals
   call build_mapping_ijkl(nint)
+
+  allocate(ijkl_gaus(nint))
+  allocate(ijkl(nint),ijkl2(nint))
+  allocate(e_S_ijkl(nint))
+  allocate(e_G_ijkl(nint))
+  allocate(e_test_ijkl(nint))
+  allocate(error_ijkl(nint))
+  allocate(mono_center(nint))
+  allocate(moy(nint), moy2(nint), moy2t(nint))
+  ijkl = 0.d0
+  ijkl2 = 0.d0
+
 
   if(mpi_rank.eq.0)print*,'**************************************************************************'
   if(mpi_rank.eq.0)print*,'Analytic calculation of APPROXIMATE GAUSSIAN one-electron integrals for ZV'
@@ -183,6 +188,7 @@ program integrals
     call count_multi_center_integrals
   end if
 
+  allocate(precond(nbasis,nbasis))
   do i=1,nbasis
     do k=1,nbasis
       precond(i,k)=gauss_ijkl(i,k,i,k)
@@ -253,7 +259,6 @@ program integrals
   !!******************
   !!
   call cpu_time(t0)
-  call build_mapping_ijkl(nint)
 
   do i=1,nbasis
     do k=1,nbasis
@@ -286,7 +291,7 @@ program integrals
   do i=1,nbasis
     do j=1,nbasis
       do ll=1,3
-        G_center(ll,i,j)= (g_min(i)*center(ll,i)+g_min(j)*center(ll,j))/(g_min(i)+g_min(j))
+        G_center(ll,i,j)= (g_slater(i)*center(ll,i)+g_slater(j)*center(ll,j))/(g_slater(i)+g_slater(j))
       enddo
     enddo
   enddo
@@ -314,6 +319,7 @@ program integrals
 
   !! Determinate which i j are used in computation of W_S and W_G
   !! i_tab_mc(i,k)=1  W_S and W_G can be computed
+  allocate(i_tab_mc(nbasis,nbasis))
   do k=1,nbasis
     do i=k,nbasis
       i_tab_mc(i,k)=0
@@ -350,7 +356,7 @@ program integrals
         do i=k,nbasis
           if(i_tab_mc(i,k).eq.1)then
             ik = (k-1)*nbasis_max+i
-            factor = 0.5d0 * a_ZV(i,k) /(g_min(i)+g_min(k))
+            factor = 0.5d0 * a_ZV(i,k) /(g_slater(i)+g_slater(k))
             do kw=1,nw
               r1_mod=dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
               r2_mod=dsqrt(r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3))

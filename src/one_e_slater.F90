@@ -4,9 +4,9 @@ program one_e_integrals
   character(80) :: charabid
   character(80) :: MOLECULE
 
-  double precision :: S_ij_STO_ex(nbasis_max,nbasis_max)
-  double precision :: V_ij_STO_ex(nbasis_max,nbasis_max)
-  double precision :: K_ij_STO_ex(nbasis_max,nbasis_max)
+  double precision, allocatable :: S_ij_STO_ex(:,:)
+  double precision, allocatable :: V_ij_STO_ex(:,:)
+  double precision, allocatable :: K_ij_STO_ex(:,:)
 
   double precision :: Sij, Vij, Kij
 
@@ -53,17 +53,21 @@ program one_e_integrals
   ! END READ INPUT
   !*****************
 
-  call read_basis(filename_basis)
-
   print*,'READING geometry in angstrom'
   call read_geometry(MOLECULE)
   print*,'ENUCL=',enucl
+
+  call read_basis(filename_basis)
 
   ng0=20
   call build_gaussian_expansion_of_orbitals()
 
   write(*,*)'**********************************'
   write(*,*)'Number of basis functions ',nbasis
+
+  allocate(S_ij_STO_ex(nbasis,nbasis))
+  allocate(V_ij_STO_ex(nbasis,nbasis))
+  allocate(K_ij_STO_ex(nbasis,nbasis))
 
   do i=1,nbasis
     do k=1,nbasis

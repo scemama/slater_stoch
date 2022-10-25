@@ -1,69 +1,61 @@
 module common_data
   implicit none
 
-  integer, parameter             :: nbasis_max=100
-  integer, parameter             :: ng_max=30, is_type_max=3
-  integer, parameter             :: nw=40
-  integer, parameter             :: nint_max=13000000
-  integer, parameter             :: n_contract_max=20
-  integer, parameter             :: number_nuclei_max=100
-  integer, parameter             :: n_atoms_max=92
+  integer, parameter             :: nbasis_max=100     ! Max number of basis functions
+
+  integer, parameter             :: nw=40              ! Number of independent walkers for the stochastic calculations
+
+  ! Gaussian fits
+  integer, parameter             :: ng_max=30                              ! Max number of Gaussians for fits
+  integer                        :: ng0                                    ! Number of Gaussians for the STO fit
+  integer                        :: i_add_2p                               ! How many functions to add for 2p's
+  integer                        :: i_add_3d                               ! How many functions to add for 3d's
+  integer                        :: i_add_large_g                          ! How many functions to add for large exponents
+
+  ! Two-electron integrals. allocated in build_mapping_ijkl 
+  integer                        :: nint                                   ! Number of <ij|kl> integrals
+  integer, allocatable           :: is(:), ks(:), js(:), ls(:)             ! Indices i,j,k,l for each integral
+
+  ! Basis per atom type
+  integer, parameter             :: n_atoms_max=92                         ! Max atomic number
+  integer, parameter             :: n_contract_max=20                      ! Max number of contractions
   integer, parameter             :: n_gauss_max=ng_max*n_contract_max
+  integer                        :: n_b(n_atoms_max)                       ! number of basis functions per atom type (S,P,D,F, or G) 
+  integer                        :: n_cont_b(n_contract_max, n_atoms_max)  ! number of contracted primitives for the radial part
 
-  character(3) basis_type
-
-  logical                        :: finite_range
-  logical                        :: finite_range_save
-  logical                        :: one_elec_ZV
-  logical                        :: two_elec_ZV
-  logical                        :: one_elec_exact
-  logical                        :: one_elec_STO_exact
-
-  integer                        :: nbasis
-  integer                        :: n_eps
-  integer                        :: number_nuclei
-  integer                        :: kcp_ijkl(nbasis_max,nbasis_max,nbasis_max,nbasis_max)
-  integer                        :: nint
-  integer                        :: is(nint_max)
-  integer                        :: ks(nint_max)
-  integer                        :: js(nint_max)
-  integer                        :: ls(nint_max)
-  integer                        :: i_add_large_g,i_add_2p,i_add_3d
-  integer                        :: ng_star(16),ng0,level,ng_kt
-
-  ! Allocated in allocate_basis
-  character(80), allocatable     :: orb_b(:,:)
-  character(80), allocatable     :: orb_name(:), orb_name_full(:)
-  integer, allocatable           :: n_b(:), n_cont_b(:,:)
-  integer, allocatable           :: nucleus_number(:)
-  integer, allocatable           :: n_STO(:)
-  integer, allocatable           :: npower(:,:),i_type(:),n_contract(:)
-  integer, allocatable           :: n_star(:,:)
-  integer, allocatable           :: n_kt(:,:),ng(:,:), n_gauss(:)
-  double precision, allocatable  :: center(:,:)
 
   ! Allocated in read_geometry
-  character(80), allocatable     :: ATOM(:)
-  double precision, allocatable  :: charge(:)
-  double precision, allocatable  :: centers_nuclei(:,:)
+  integer                        :: number_nuclei                            ! Number of nuclei in molecule
+  character(80), allocatable     :: ATOM(:)                                  ! Atom labels
+  double precision, allocatable  :: charge(:)                                ! Nuclear charges
+  double precision, allocatable  :: centers_nuclei(:,:)                      ! XYZ coordinates of nuclei
+  double precision               :: enucl                                    ! Nuclear repulsion energy
 
-  double precision               :: enucl
+  ! Allocated in allocate_basis
+  integer                        :: nbasis                            ! Number of basis functions
+  character(80), allocatable     :: orb_b(:,:)                        ! name of the basis function, that is S,P,D,F or G
+  character(80), allocatable     :: orb_name(:)                       ! Name of the orbital (1S, 2S, 3P) 
+  character(80), allocatable     :: orb_name_full(:)                  ! Full name of the orbital (5G_XYZZ)
+  integer, allocatable           :: nucleus_number(:)                 ! Nucleus on which the function is centered
+  integer, allocatable           :: n_STO(:)                          ! Value of n in STO, in r^n.exp(-a.r)
+  integer, allocatable           :: npower(:,:)                       ! Polynomial part: powers of x,y,z
+  integer, allocatable           :: i_type(:)                         ! 1: c.exp(-a.r)  2: c.r^2.exp(-a.r)
+  integer, allocatable           :: n_contract(:)                     ! Number of contracted STOs
+  integer, allocatable           :: ng(:,:)                           ! Number of Gaussians used to fit a contracted STO
+  integer, allocatable           :: n_gauss(:)                        ! Number of Gaussians used to fit an STO
+  double precision, allocatable  :: center(:,:)                       ! Where the basis functions are centered
 
-  double precision               :: G_center(3,nbasis_max,nbasis_max)
-  double precision               :: dist_ij(nbasis_max,nbasis_max)
-  double precision               :: gamma_b(nbasis_max,n_contract_max,n_atoms_max)
-  double precision               :: coef_b(nbasis_max,n_contract_max,n_atoms_max)
-  double precision               :: eps_rc,alpha(0:16),beta(0:16)
-  double precision               :: alpha_ZV,a_ZV(nbasis_max,nbasis_max)
-  double precision               :: c_fit_GTO(ng_max,ng_max,0:16),g_fit_GTO(ng_max,ng_max,0:16)
-  double precision               :: c_fit_STO(ng_max,ng_max,0:16),g_fit_STO(ng_max,ng_max,0:16)
-  double precision               :: c_fit_exp(ng_max,ng_max),g_fit_exp(ng_max,ng_max)
-  double precision               :: g_thr
-  double precision               :: c_gauss(2,n_gauss_max*ng_max,nbasis_max)
-  double precision               :: g_gauss(n_gauss_max*ng_max,nbasis_max),g_min(nbasis_max)
-  double precision               :: r_c(nbasis_max),g_slater(nbasis_max),r_infty(nbasis_max)
-  double precision               :: r_c_prim(n_contract_max,nbasis_max),gauss_min(nbasis_max)
-  double precision               :: g_contract(n_contract_max,nbasis_max)
-  double precision               :: c_contract(n_contract_max,nbasis_max)
+  double precision               :: G_center(3,nbasis_max,nbasis_max)        ! Centers of Gaussian products
+  double precision               :: gamma_b(nbasis_max,n_contract_max,n_atoms_max) ! Exponent in basis
+  double precision               :: coef_b(nbasis_max,n_contract_max,n_atoms_max)  ! Contraction coefficient in basis
+  double precision               :: a_ZV(nbasis_max,nbasis_max)              ! Zero-variance parameter
+  double precision               :: c_fit_exp(ng_max,ng_max)                 ! SMILES fit
+  double precision               :: g_fit_exp(ng_max,ng_max)                 ! SMILES fit
+  double precision               :: g_thr                                    ! Threshold to identify large exponents
+  double precision               :: c_gauss(2,n_gauss_max*ng_max,nbasis_max) ! Coefficients of contracted Gaussians
+  double precision               :: g_gauss(n_gauss_max*ng_max,nbasis_max)   ! Exponents of contracted Gaussians
+  double precision               :: g_slater(nbasis_max)                     ! Exponent of STO
+  double precision               :: g_contract(n_contract_max,nbasis_max)    ! Exponents of contracted STOs
+  double precision               :: c_contract(n_contract_max,nbasis_max)    ! Contraction coefficients of STO
 
 end module

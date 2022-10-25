@@ -14,12 +14,12 @@ subroutine build_mapping_ijkl(nint_out)
   integer :: kcp, i, j, k, l
   np=(nbasis*(nbasis+1))/2
   nint_theo=(np*(np+1))/2
-  if(nint_theo.gt.nint_max)then
-    print*,'expected number of two-electron integrals is',nint_theo
-    print*,'declared size of array for two-electron integrals is',nint_max
-    print*,' I continue but you shall need to increase nint_max'
-  endif
-  
+
+  allocate(is(nint_theo))
+  allocate(js(nint_theo))
+  allocate(ks(nint_theo))
+  allocate(ls(nint_theo))
+
   kcp=0
   do l=1,nbasis
     do k=1,nbasis
@@ -33,7 +33,6 @@ subroutine build_mapping_ijkl(nint_out)
             js(kcp)=j
             ks(kcp)=k
             ls(kcp)=l
-            kcp_ijkl(i,j,k,l)=kcp
           endif
         enddo
       enddo

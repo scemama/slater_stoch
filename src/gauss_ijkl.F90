@@ -11,9 +11,6 @@
 !!  i_type(i)=1  :     c_gauss(2,...)=0 and only first part is computed
 !!  i_type(i)=2  :     c_gauss(1...)=0 and only second part is computed
 !!  i_type(i)=3  :     c_gauss(1,...) and c_gauss(2,...) computed
-!!
-!!  For STO g_min(i)=g_slater
-!!  For GTO = smallest exponent of the expansion (to be used for computing G_center in Monte Carlo)
 
 
 !! ROUTINE GAUSS_IJKL

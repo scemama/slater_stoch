@@ -3,7 +3,6 @@ subroutine write_STO_in_file_info_basis(i_orb)
   integer, intent(in) :: i_orb
 
   integer :: mm
-  double precision, external :: chi2
 
   write(21,'(a,i4,5a,i4,a)')'Orb #',i_orb,'  ',trim(orb_name_full(i_orb)),'  ',trim(ATOM(nucleus_number(i_orb))),&
         ' STO fitted with',ng0,' gaussians'
@@ -11,7 +10,6 @@ subroutine write_STO_in_file_info_basis(i_orb)
   do mm=1,n_contract(i_orb)
     write(21,'(a5,f10.3,a6,f10.3)')'  c_i= ',c_contract(mm,i_orb),' g_i= ',g_contract(mm,i_orb)
   enddo
-  write(21,'(a,e22.15)')'chi2 (STO orbital and its gaussian representation)= ',chi2(i_orb)
   write(21,*)
   write(22,'(i5, x, i5)')i_orb,n_gauss(i_orb)
   write(22,'(4e22.15)')(c_gauss(1,mm,i_orb),mm=1,n_gauss(i_orb))
