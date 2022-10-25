@@ -13,7 +13,7 @@ subroutine read_basis(filename_basis)
   !! orb_b(k,i) name of the basis function, that is S,P,D,F or G for k=1,n_b(i)
   !! n_cont_b(k,i) number of contracted primitives for the radial part
   !! for the moment STO have only one primtive
-  !! u_STO(r)=r**n_sto* exp(-gi r)
+  !! u_STO(r)=r**n_STO* exp(-gi r)
   !! u_GTO(r) = sum_i c_i exp(-gi r**2)
   !! g_i and c_i  gamma_b(k,m,i),coef_b(k,m,i) m=1,n_cont_b(k,i)
 

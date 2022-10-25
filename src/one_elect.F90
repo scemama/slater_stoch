@@ -24,7 +24,7 @@ subroutine one_elect(i,k,Sij,Vij,Kij)
       nc(kk)=1
       do m=1,n_gauss(i_o)
         do ii=1,nc(kk)
-          d(m,ii,kk)=c_gauss(1,m,i_o)
+          d(m,ii,kk)=c_gauss(m,i_o,1)
         enddo
       enddo
       do ll=1,3
@@ -38,7 +38,7 @@ subroutine one_elect(i,k,Sij,Vij,Kij)
       nc(kk)=3
       do m=1,n_gauss(i_o)
         do ii=1,nc(kk)
-          d(m,ii,kk)=c_gauss(2,m,i_o)
+          d(m,ii,kk)=c_gauss(m,i_o,2)
         enddo
       enddo
       do ll=1,3
@@ -56,8 +56,8 @@ subroutine one_elect(i,k,Sij,Vij,Kij)
       nc(kk)=4
       do m=1,n_gauss(i_o)
         do ii=1,nc(kk)
-          if(ii.eq.1)d(m,ii,kk)=c_gauss(1,m,i_o)
-          if(ii.gt.1)d(m,ii,kk)=c_gauss(2,m,i_o)
+          if(ii.eq.1)d(m,ii,kk)=c_gauss(m,i_o,1)
+          if(ii.gt.1)d(m,ii,kk)=c_gauss(m,i_o,2)
         enddo
       enddo
       do ll=1,3

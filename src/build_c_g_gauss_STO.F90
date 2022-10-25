@@ -7,16 +7,16 @@ subroutine build_c_g_gauss_STO(i_orb)
     if(i_type(i_orb).eq.1)then
       do ii=1,ng(mm,i_orb)
         kcp=kcp+1
-        c_gauss(1,kcp,i_orb)=c_contract(mm,i_orb)*c_fit_exp(ii,ng(mm,i_orb))
-        c_gauss(2,kcp,i_orb)=0.d0
+        c_gauss(kcp,i_orb,1)=c_contract(mm,i_orb)*c_fit_exp(ii,ng(mm,i_orb))
+        c_gauss(kcp,i_orb,2)=0.d0
         g_gauss(kcp,i_orb)=g_contract(mm,i_orb)**2*g_fit_exp(ii,ng(mm,i_orb))
       enddo ! ii
     endif
     if(i_type(i_orb).eq.2)then
       do ii=1,ng(mm,i_orb)
         kcp=kcp+1
-        c_gauss(1,kcp,i_orb)=0.d0
-        c_gauss(2,kcp,i_orb)=c_contract(mm,i_orb)                    &
+        c_gauss(kcp,i_orb,1)=0.d0
+        c_gauss(kcp,i_orb,2)=c_contract(mm,i_orb)                    &
             *2.d0*c_fit_exp(ii,ng(mm,i_orb))*g_fit_exp(ii,ng(mm,i_orb))*g_contract(mm,i_orb)
         g_gauss(kcp,i_orb)=g_contract(mm,i_orb)**2*g_fit_exp(ii,ng(mm,i_orb))
       enddo ! ii

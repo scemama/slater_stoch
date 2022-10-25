@@ -51,7 +51,7 @@ module common_data
   double precision               :: c_fit_exp(ng_max,ng_max)                 ! SMILES fit
   double precision               :: g_fit_exp(ng_max,ng_max)                 ! SMILES fit
   double precision               :: g_thr                                    ! Threshold to identify large exponents
-  double precision               :: c_gauss(2,n_gauss_max*ng_max,nbasis_max) ! Coefficients of contracted Gaussians
+  double precision               :: c_gauss(n_gauss_max*ng_max,nbasis_max,2) ! Coefficients of contracted Gaussians
   double precision               :: g_gauss(n_gauss_max*ng_max,nbasis_max)   ! Exponents of contracted Gaussians
   double precision               :: g_slater(nbasis_max)                     ! Exponent of STO
   double precision               :: g_contract(n_contract_max,nbasis_max)    ! Exponents of contracted STOs

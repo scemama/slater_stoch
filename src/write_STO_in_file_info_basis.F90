@@ -12,8 +12,8 @@ subroutine write_STO_in_file_info_basis(i_orb)
   enddo
   write(21,*)
   write(22,'(i5, x, i5)')i_orb,n_gauss(i_orb)
-  write(22,'(4e22.15)')(c_gauss(1,mm,i_orb),mm=1,n_gauss(i_orb))
-  write(22,'(4e22.15)')(c_gauss(2,mm,i_orb),mm=1,n_gauss(i_orb))
+  write(22,'(4e22.15)')(c_gauss(mm,i_orb,1),mm=1,n_gauss(i_orb))
+  write(22,'(4e22.15)')(c_gauss(mm,i_orb,2),mm=1,n_gauss(i_orb))
   write(22,'(4e22.15)')(g_gauss(mm,i_orb)  ,mm=1,n_gauss(i_orb))
   write(22,*)
 end

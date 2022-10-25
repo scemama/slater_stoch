@@ -6,11 +6,11 @@
 !!  phi_i(r) centered at [ center(1,i),center(2,i),center(3,i) ]
 !!  phi_i(r) = x^npower(1,i) y^npower(2,i) z^npower(3,i)  u_i(r)
 !!
-!!  u_i(r)= sum_{m=1,n_gauss(i)} [ c_gauss(1,m,i) + c_gauss(2,m,i) r^2 ] exp[-g_gauss(m,i) r^2]
+!!  u_i(r)= sum_{m=1,n_gauss(i)} [ c_gauss(m,i,1) + c_gauss(m,i,2) r^2 ] exp[-g_gauss(m,i) r^2]
 !!
-!!  i_type(i)=1  :     c_gauss(2,...)=0 and only first part is computed
-!!  i_type(i)=2  :     c_gauss(1...)=0 and only second part is computed
-!!  i_type(i)=3  :     c_gauss(1,...) and c_gauss(2,...) computed
+!!  i_type(i)=1  :     c_gauss(...,2)=0 and only first part is computed
+!!  i_type(i)=2  :     c_gauss(...,1)=0 and only second part is computed
+!!  i_type(i)=3  :     c_gauss(...,1) and c_gauss(...,2) computed
 
 
 !! ROUTINE GAUSS_IJKL
@@ -73,7 +73,7 @@ double precision function gauss_ijkl(i,k,j,l)
       nc(kk)=1
       do m=1,n_gauss(i_o)
         do ii=1,nc(kk)
-          d(m,ii,kk)=c_gauss(1,m,i_o)
+          d(m,ii,kk)=c_gauss(m,i_o,1)
         enddo
       enddo
       do ll=1,3
@@ -87,7 +87,7 @@ double precision function gauss_ijkl(i,k,j,l)
       nc(kk)=3
       do m=1,n_gauss(i_o)
         do ii=1,nc(kk)
-          d(m,ii,kk)=c_gauss(2,m,i_o)
+          d(m,ii,kk)=c_gauss(m,i_o,2)
         enddo
       enddo
       do ll=1,3
@@ -105,8 +105,8 @@ double precision function gauss_ijkl(i,k,j,l)
       nc(kk)=4
       do m=1,n_gauss(i_o)
         do ii=1,nc(kk)
-          if(ii.eq.1)d(m,ii,kk)=c_gauss(1,m,i_o)
-          if(ii.gt.1)d(m,ii,kk)=c_gauss(2,m,i_o)
+          if(ii.eq.1)d(m,ii,kk)=c_gauss(m,i_o,1)
+          if(ii.gt.1)d(m,ii,kk)=c_gauss(m,i_o,2)
         enddo
       enddo
       do ll=1,3
