@@ -8,6 +8,7 @@ module common_data
   ! Gaussian fits
   integer, parameter             :: ng_max=30                              ! Max number of Gaussians for fits
   integer                        :: ng0                                    ! Number of Gaussians for the STO fit
+  double precision               :: g_thr                                  ! Threshold to identify large exponents
   integer                        :: i_add_2p                               ! How many functions to add for 2p's
   integer                        :: i_add_3d                               ! How many functions to add for 3d's
   integer                        :: i_add_large_g                          ! How many functions to add for large exponents
@@ -47,15 +48,14 @@ module common_data
   integer, allocatable           :: ng(:,:)                           ! Number of Gaussians used to fit a contracted STO
   integer, allocatable           :: n_gauss(:)                        ! Number of Gaussians used to fit an STO
   double precision, allocatable  :: center(:,:)                       ! Where the basis functions are centered
+  double precision, allocatable  :: a_ZV(:,:)                                ! Zero-variance parameter
+  double precision, allocatable  :: c_gauss(:,:,:)                           ! Coefficients of contracted Gaussians
+  double precision, allocatable  :: g_gauss(:,:)                             ! Exponents of contracted Gaussians
+  double precision, allocatable  :: g_slater(:)                              ! Exponent of STO
+  double precision, allocatable  :: g_contract(:,:)                          ! Exponents of contracted STOs
+  double precision, allocatable  :: c_contract(:,:)                          ! Contraction coefficients of STO
 
-  double precision               :: a_ZV(nbasis_max,nbasis_max)              ! Zero-variance parameter
   double precision               :: c_fit_exp(ng_max,ng_max)                 ! SMILES fit
   double precision               :: g_fit_exp(ng_max,ng_max)                 ! SMILES fit
-  double precision               :: g_thr                                    ! Threshold to identify large exponents
-  double precision               :: c_gauss(n_gauss_max*ng_max,nbasis_max,2) ! Coefficients of contracted Gaussians
-  double precision               :: g_gauss(n_gauss_max*ng_max,nbasis_max)   ! Exponents of contracted Gaussians
-  double precision               :: g_slater(nbasis_max)                     ! Exponent of STO
-  double precision               :: g_contract(n_contract_max,nbasis_max)    ! Exponents of contracted STOs
-  double precision               :: c_contract(n_contract_max,nbasis_max)    ! Contraction coefficients of STO
 
 end module

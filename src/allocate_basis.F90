@@ -11,4 +11,11 @@ subroutine allocate_basis()
   allocate(orb_name(nbasis))
   allocate(orb_name_full(nbasis))
 
+  allocate(a_ZV(nbasis,nbasis))
+  allocate(c_gauss(n_gauss_max*ng_max,nbasis,2))
+  allocate(g_gauss(n_gauss_max*ng_max,nbasis))
+  allocate(g_slater(nbasis))
+  allocate(g_contract(n_contract_max,nbasis))
+  allocate(c_contract(n_contract_max,nbasis))
+
 end
