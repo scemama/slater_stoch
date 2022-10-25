@@ -20,8 +20,12 @@ module common_data
   integer, parameter             :: n_atoms_max=92                         ! Max atomic number
   integer, parameter             :: n_contract_max=20                      ! Max number of contractions
   integer, parameter             :: n_gauss_max=ng_max*n_contract_max
+  integer, parameter             :: n_slater_max=100                       ! Max number of STO per atom type
   integer                        :: n_b(n_atoms_max)                       ! number of basis functions per atom type (S,P,D,F, or G) 
   integer                        :: n_cont_b(n_contract_max, n_atoms_max)  ! number of contracted primitives for the radial part
+  double precision               :: gamma_b(n_slater_max,n_contract_max,n_atoms_max) ! Exponent in basis
+  double precision               :: coef_b(n_slater_max,n_contract_max,n_atoms_max)  ! Contraction coefficient in basis
+  character(80)                  :: orb_b(n_slater_max,n_atoms_max)                  ! name of the basis function, that is S,P,D,F or G
 
 
   ! Allocated in read_geometry
@@ -33,7 +37,6 @@ module common_data
 
   ! Allocated in allocate_basis
   integer                        :: nbasis                            ! Number of basis functions
-  character(80), allocatable     :: orb_b(:,:)                        ! name of the basis function, that is S,P,D,F or G
   character(80), allocatable     :: orb_name(:)                       ! Name of the orbital (1S, 2S, 3P) 
   character(80), allocatable     :: orb_name_full(:)                  ! Full name of the orbital (5G_XYZZ)
   integer, allocatable           :: nucleus_number(:)                 ! Nucleus on which the function is centered
@@ -45,8 +48,6 @@ module common_data
   integer, allocatable           :: n_gauss(:)                        ! Number of Gaussians used to fit an STO
   double precision, allocatable  :: center(:,:)                       ! Where the basis functions are centered
 
-  double precision               :: gamma_b(nbasis_max,n_contract_max,n_atoms_max) ! Exponent in basis
-  double precision               :: coef_b(nbasis_max,n_contract_max,n_atoms_max)  ! Contraction coefficient in basis
   double precision               :: a_ZV(nbasis_max,nbasis_max)              ! Zero-variance parameter
   double precision               :: c_fit_exp(ng_max,ng_max)                 ! SMILES fit
   double precision               :: g_fit_exp(ng_max,ng_max)                 ! SMILES fit
