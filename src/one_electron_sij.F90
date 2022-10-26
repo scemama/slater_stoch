@@ -25,6 +25,7 @@ double precision function one_electron_Sij(na,ra,gamA,nb,rb,gamB)
   double precision, parameter :: pi=dacos(-1.d0)
   double precision :: gamtot, rmu, AmB, arg
   integer :: l
+  double precision :: x, y, z
 
   double precision, external :: one_electron_I
 
@@ -34,7 +35,10 @@ double precision function one_electron_Sij(na,ra,gamA,nb,rb,gamB)
   do l=1,3
     rp(l)=(gamA*ra(l)+gamB*rb(l))/gamtot
   enddo
-  AmB=(ra(1)-rb(1))**2+(ra(2)-rb(2))**2+(ra(3)-rb(3))**2
+  x=ra(1)-rb(1)
+  y=ra(2)-rb(2)
+  z=ra(3)-rb(3)
+  AmB=x*x+y*y+z*z
 
   one_electron_sij=0.d0
   arg=rmu*AmB

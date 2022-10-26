@@ -13,8 +13,9 @@ AM_SILENT_RULES(yes)
 AC_LANG(Fortran)
 
 # Checks for programs.
-AC_PROG_F77
+#AC_PROG_F77
 AX_PROG_FC_MPI
+F77=$FC
 
 
 # Checks for libraries.
@@ -31,6 +32,7 @@ AC_LANG_POP()
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
+AC_CHECK_FUNC([vderfcinv],[ AC_DEFINE([HAVE_VDERFINVC],[1],[vdErfInvc found]) ])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

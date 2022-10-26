@@ -11,7 +11,6 @@ subroutine give_explicit_poly_and_gaussian(P_new,P_center,p,fact_k,iorder,alpha,
   implicit none
 
 integer, parameter :: max_dim = 511
-integer, parameter :: N_int_max = 32
 
 double precision, parameter :: pi =  dacos(-1.d0)
 double precision, parameter :: sqpi =  dsqrt(dacos(-1.d0))

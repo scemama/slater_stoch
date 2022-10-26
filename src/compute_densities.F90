@@ -1,10 +1,10 @@
 subroutine compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
   use common_data
   integer, intent(in) :: i, k
-  double precision, intent(in)  :: ut1(nw,3,nbasis*nbasis)
-  double precision, intent(in)  :: ut2(nw,3,nbasis*nbasis)
+  double precision, intent(in)  :: ut1  (nw,3,nbasis*nbasis)
+  double precision, intent(in)  :: ut2  (nw,3,nbasis*nbasis)
   double precision, intent(out) :: rho  (nw,nbasis*nbasis,2)
-  double precision, intent(out) :: poly  (nw,nbasis*nbasis,2)
+  double precision, intent(out) :: poly (nw,nbasis*nbasis,2)
   double precision, intent(out) :: rho_G(nw,nbasis*nbasis,2)
 
   integer :: ik, kw, kk

@@ -1,7 +1,14 @@
 ! inverse of error function in double precision
 !
 double precision function dierfc(y)
-  implicit real*8 (a - h, o - z)
+  implicit none
+  double precision :: qa, qb, qc, qd
+  double precision :: q0, q1, q2, q3, q4
+  double precision :: pa, pb
+  double precision :: p0, p1, p2, p3, p4, p5, p6, p7, p8, p9
+  double precision :: p10, p11, p12, p13, p14, p15, p16, p17, p18, p19
+  double precision :: p20, p21, p22
+  double precision :: x, y, z, s, t, u, w
   parameter (                                                        &
       qa = 9.16461398268964d-01,                                     &
       qb = 2.31729200323405d-01,                                     &
@@ -41,9 +48,9 @@ double precision function dierfc(y)
       p22 = 1.12648096188977922d-03)
   z = y
   if (y .gt. 1.d0) z = 2.d0 - y
-  w = qa - log(z)
-  u = sqrt(w)
-  s = (qc + log(u)) / w
+  w = qa - dlog(z)
+  u = dsqrt(w)
+  s = (qc + dlog(u)) / w
   t = 1.d0 / (u + qb)
   x = u * (1 - s * (0.5d0 + s * qd)) -                               &
       ((((q4 * t + q3) * t + q2) * t + q1) * t + q0) * t
@@ -55,7 +62,7 @@ double precision function dierfc(y)
   s = ((((((((((((s * u + p11) * u + p10) * u +                      &
       p9) * u + p8) * u + p7) * u + p6) * u + p5) * u +              &
       p4) * u + p3) * u + p2) * u + p1) * u + p0) * t -              &
-      z * exp(x * x - pb)
+      z * dexp(x * x - pb)
   x = x + s * (1.d0 + x * s)
   if (y .gt. 1.d0) x = -x
   dierfc = x

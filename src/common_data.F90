@@ -1,7 +1,7 @@
 module common_data
   implicit none
 
-  integer, parameter             :: nw=40              ! Number of independent walkers for the stochastic calculations
+  integer, parameter             :: nw=40             ! Number of independent walkers for the stochastic calculations
 
   ! Gaussian fits
   integer, parameter             :: ng_max=30                              ! Max number of Gaussians for fits

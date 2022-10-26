@@ -6,7 +6,6 @@ double precision function rint_sum(n_pt_out,rho,d1)
   
   !!  include 'constants.include.F'
   integer, parameter             :: max_dim = 511
-  integer, parameter             :: N_int_max = 32
   
   double precision, parameter    :: pi =  dacos(-1.d0)
   double precision, parameter    :: sqpi =  dsqrt(dacos(-1.d0))

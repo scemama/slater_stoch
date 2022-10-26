@@ -4,6 +4,6 @@ double precision function norm_sto(gam,n)
   integer n,p
   p=dble(n+n)
   g=2.d0*gam
-  norm_sto=dsqrt( g**(p+1)/fact(p))
+  norm_sto=dsqrt( g**(2*n+1)/fact(p))
 end
 
