@@ -20,12 +20,11 @@ module common_data
   integer, parameter             :: n_contract_max=20                      ! Max number of contractions
   integer, parameter             :: n_gauss_max=ng_max*n_contract_max
   integer, parameter             :: n_slater_max=100                       ! Max number of STO per atom type
-  integer                        :: n_b(n_atoms_max)                       ! number of basis functions per atom type (S,P,D,F, or G) 
-  integer                        :: n_cont_b(n_contract_max, n_atoms_max)  ! number of contracted primitives for the radial part
-  double precision               :: gamma_b(n_slater_max,n_contract_max,n_atoms_max) ! Exponent in basis
-  double precision               :: coef_b(n_slater_max,n_contract_max,n_atoms_max)  ! Contraction coefficient in basis
-  character(80)                  :: orb_b(n_slater_max,n_atoms_max)                  ! name of the basis function, that is S,P,D,F or G
-
+  integer, allocatable           :: n_b(:)                                 ! number of basis functions per atom type (S,P,D,F, or G) 
+  integer, allocatable           :: n_cont_b(:,:)                          ! number of contracted primitives for the radial part
+  double precision, allocatable  :: gamma_b(:,:,:)                         ! Exponent in basis
+  double precision, allocatable  :: coef_b(:,:,:)                          ! Contraction coefficient in basis
+  character(80), allocatable     :: orb_b(:,:)                             ! Name of the basis function, that is S,P,D,F or G
 
   ! Allocated in read_geometry
   integer                        :: number_nuclei                            ! Number of nuclei in molecule
