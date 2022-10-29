@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4
 
+CLEANFILES=trexio.mod common_data.mod
+
 bin_PROGRAMS = one_e_slater two_e_slater
 
 COMMON_SOURCE = \
@@ -50,6 +52,7 @@ COMMON_SOURCE = \
  src/rint.F90 \
  src/rint_sum.F90 \
  src/smallg.F90 \
+ src/trexio.F90 \
  src/u_gauss.F90 \
  src/u_orb.F90 \
  src/write_STO_in_file_info_basis.F90

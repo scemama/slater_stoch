@@ -34,5 +34,31 @@ AC_LANG_POP()
 # Checks for library functions.
 AC_CHECK_FUNC([vderfcinv],[ AC_DEFINE([HAVE_VDERFINVC],[1],[vdErfInvc found]) ])
 
+AC_ARG_WITH([trexio],
+            [AS_HELP_STRING([--without-trexio],
+                            [disable support for TREXIO])],
+            [with_trexio=$withval],
+            [with_trexio=yes])
+
+AS_CASE([$with_trexio],
+  [no], [],
+  [yes],
+  [AC_CHECK_LIB([trexio], [trexio_open], [],
+                [PKG_CHECK_MODULES([TREXIO], [trexio]) ])
+   CFLAGS="$CFLAGS $TREXIO_CFLAGS"
+   LIBS="$LIBS $TREXIO_LIBS"
+   AC_DEFINE([HAVE_TREXIO], [1], [Define if TREXIO support is available])
+   ARGS="${ARGS} trexio"],
+  [AS_IF([test ! -d "$withval"],
+         [AC_MSG_ERROR([--with-trexio=$withval: argument is not a directory])])
+   TREXIO_LIBS="-L$with_trexio/lib -ltrexio"
+   TREXIO_CFLAGS="-I$with_trexio/include"
+   CFLAGS="$CFLAGS $TREXIO_CFLAGS"
+   LIBS="$LIBS $TREXIO_LIBS"
+   AC_DEFINE([HAVE_TREXIO], [1], [Define if TREXIO support is available])
+   ARGS="${ARGS} trexio"
+  ])
+
+
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

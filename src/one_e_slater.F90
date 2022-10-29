@@ -1,6 +1,12 @@
 program one_e_integrals
   use common_data
 
+#ifdef HAVE_TREXIO
+  use trexio
+#endif
+
+  implicit none
+
   character(80) :: charabid
   character(80) :: MOLECULE
 
@@ -17,6 +23,13 @@ program one_e_integrals
   character(128) :: filename_basis
 
   integer :: i, k
+
+#ifdef HAVE_TREXIO
+  character*(128)   :: trexio_filename
+  integer           :: rc
+  integer(trexio_t) :: trexio_file
+  character(128)    :: err_message
+#endif
 
   write(filename_in,'(A4)') 'j_in'
 
@@ -78,6 +91,29 @@ program one_e_integrals
     enddo
   enddo
 
+#ifdef HAVE_TREXIO
+
+  trexio_filename = trim(MOLECULE)//'.h5'
+  trexio_file = trexio_open(trexio_filename, 'w', TREXIO_HDF5, rc)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
+  call trexio_write_geometry(trexio_file)
+  call trexio_write_basis(trexio_file)
+
+  ! Write Integrals
+  ! ---------------
+
+  rc = trexio_write_ao_1e_int_overlap(trexio_file, S_ij_STO_ex)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
+  rc = trexio_write_ao_1e_int_kinetic(trexio_file, K_ij_STO_ex)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
+  rc = trexio_write_ao_1e_int_potential_n_e(trexio_file, V_ij_STO_ex)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
+#else
+
   open(unit=104,file=filename_out_s_ex)
   open(unit=105,file=filename_out_v_ex)
   open(unit=106,file=filename_out_k_ex)
@@ -92,5 +128,6 @@ program one_e_integrals
   close(105)
   close(106)
 
+#endif
 end
 
