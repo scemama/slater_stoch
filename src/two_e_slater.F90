@@ -76,7 +76,10 @@ program integrals
   integer           :: rc
   integer(trexio_t) :: trexio_file
   character(128)    :: err_message
-  integer, allocatable :: indx(:,:)
+  integer, parameter:: BUFSIZE = 1048576
+  integer           :: indx(4,BUFSIZE)
+  double precision  :: vals(BUFSIZE)
+  integer*8         :: icount, offset
 #endif
 
 #ifdef HAVE_MPI
@@ -524,17 +527,28 @@ program integrals
     trexio_file = trexio_open(trexio_filename, 'w', TREXIO_HDF5, rc)
     call trexio_assert(rc, TREXIO_SUCCESS)
 
-    allocate(indx(4,nint))
+    icount = 0_8
+    offset = 0_8
     do kcp=1,nint
-      indx(1,kcp) = is(kcp)
-      indx(2,kcp) = js(kcp)
-      indx(3,kcp) = ks(kcp)
-      indx(4,kcp) = ls(kcp)
+      if (dabs(moy(kcp)) < 1.d-15) cycle
+      icount = icount + 1_8
+      vals(icount) = moy(kcp)
+      indx(1,icount) = is(kcp)
+      indx(2,icount) = js(kcp)
+      indx(3,icount) = ks(kcp)
+      indx(4,icount) = ls(kcp)
+      if (icount == BUFSIZE) then
+        rc = trexio_write_ao_2e_int_eri(trexio_file, offset, icount, indx, vals)
+        call trexio_assert(rc, TREXIO_SUCCESS)
+        offset = offset + icount
+        icount = 0_8
+      endif
     enddo
-    rc = trexio_write_ao_2e_int_eri(trexio_file, 0_8, nint, indx, moy)
-    call trexio_assert(rc, TREXIO_SUCCESS)
+    if (icount > 0_8) then
+      rc = trexio_write_ao_2e_int_eri(trexio_file, offset, icount, indx, vals)
+      call trexio_assert(rc, TREXIO_SUCCESS)
+    endif
 
-    deallocate(indx)
     rc = trexio_close(trexio_file)
     call trexio_assert(rc, TREXIO_SUCCESS)
 
