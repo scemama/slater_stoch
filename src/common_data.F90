@@ -12,7 +12,7 @@ module common_data
   integer                        :: i_add_large_g                          ! How many functions to add for large exponents
 
   ! Two-electron integrals. allocated in build_mapping_ijkl 
-  integer                        :: nint                                   ! Number of <ij|kl> integrals
+  integer*8                      :: nint                                   ! Number of <ij|kl> integrals
   integer, allocatable           :: is(:), ks(:), js(:), ls(:)             ! Indices i,j,k,l for each integral
 
   ! Basis per atom type

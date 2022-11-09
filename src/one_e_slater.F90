@@ -103,13 +103,16 @@ program one_e_integrals
   ! Write Integrals
   ! ---------------
 
-  rc = trexio_write_ao_1e_int_overlap(trexio_file, S_ij_STO_ex)
-  call trexio_assert(rc, TREXIO_SUCCESS)
+
+
 
   rc = trexio_write_ao_1e_int_kinetic(trexio_file, K_ij_STO_ex)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
   rc = trexio_write_ao_1e_int_potential_n_e(trexio_file, V_ij_STO_ex)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
+  rc = trexio_write_ao_1e_int_overlap(trexio_file, S_ij_STO_ex)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
 #else

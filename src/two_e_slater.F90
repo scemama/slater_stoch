@@ -1,5 +1,10 @@
 program integrals
   use common_data
+
+#ifdef HAVE_TREXIO
+  use trexio
+#endif
+
 #ifdef HAVE_MPI
   include 'mpif.h'
 #endif
@@ -66,6 +71,13 @@ program integrals
 
   double precision, external     :: gauss_ijkl
 
+#ifdef HAVE_TREXIO
+  character*(128)   :: trexio_filename
+  integer           :: rc
+  integer(trexio_t) :: trexio_file
+  character(128)    :: err_message
+  integer, allocatable :: indx(:,:)
+#endif
 
 #ifdef HAVE_MPI
   call mpi_init(ierr)
@@ -235,19 +247,19 @@ program integrals
 #endif
 
 
-  if (mpi_rank.eq.0) then
-    !! Write gaussian <ij|kl>
-    open(unit=14,file='bielec_ao_gaus')
-    rewind 14
-    do kcp=1,nint
-      i=is(kcp)
-      k=ks(kcp)
-      j=js(kcp)
-      l=ls(kcp)
-      write(14,'(4(I5,X),D22.15)') i,j,k,l, ijkl_gaus(kcp)
-    enddo
-    close(14)
-  endif
+!  if (mpi_rank.eq.0) then
+!    !! Write gaussian <ij|kl>
+!    open(unit=14,file='bielec_ao_gaus')
+!    rewind 14
+!    do kcp=1,nint
+!      i=is(kcp)
+!      k=ks(kcp)
+!      j=js(kcp)
+!      l=ls(kcp)
+!      write(14,'(4(I5,X),D22.15)') i,j,k,l, ijkl_gaus(kcp)
+!    enddo
+!    close(14)
+!  endif
 
   if(mpi_rank.eq.0)print*,'*********************************************************************'
   if(mpi_rank.eq.0)print*,'IJKL REMOVED DUE TO CAUCHY-SCHWARZ=',n_zero_cauchy,' OVER',nint,'IJKL'
@@ -475,10 +487,7 @@ program integrals
 
   endif
 
-
   if (mpi_rank == 0) then
-
-    open(unit=104,file=filename_out_ijkl)
 
     error_max=-1.d0
     errmoy_ijkl=0.d0
@@ -492,7 +501,6 @@ program integrals
       k=ks(kcp)
       j=js(kcp)
       l=ls(kcp)
-      write(104,'(4(I5,X),2D22.15)') i,j,k,l, moy(kcp), moy2(kcp)
       if(moy2(kcp).gt.error_max)error_max=moy2(kcp)
 
       if( dabs(moy(kcp)).gt.1.d-6.and.(moy2(kcp).ne.0.d0))then
@@ -508,9 +516,41 @@ program integrals
 
     enddo
 
+    write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
+
+#ifdef HAVE_TREXIO
+
+    trexio_filename = trim(MOLECULE)//'.h5'
+    trexio_file = trexio_open(trexio_filename, 'w', TREXIO_HDF5, rc)
+    call trexio_assert(rc, TREXIO_SUCCESS)
+
+    allocate(indx(4,nint))
+    do kcp=1,nint
+      indx(1,kcp) = is(kcp)
+      indx(2,kcp) = js(kcp)
+      indx(3,kcp) = ks(kcp)
+      indx(4,kcp) = ls(kcp)
+    enddo
+    rc = trexio_write_ao_2e_int_eri(trexio_file, 0_8, nint, indx, moy)
+    call trexio_assert(rc, TREXIO_SUCCESS)
+
+    deallocate(indx)
+    rc = trexio_close(trexio_file)
+    call trexio_assert(rc, TREXIO_SUCCESS)
+
+#else
+
+    open(unit=104,file=filename_out_ijkl)
+    do kcp=1,nint
+      i=is(kcp)
+      k=ks(kcp)
+      j=js(kcp)
+      l=ls(kcp)
+      write(104,'(4(I5,X),2D22.15)') i,j,k,l, moy(kcp), moy2(kcp)
+    enddo
     close(104)
 
-    write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
+#endif
 
   endif
 
