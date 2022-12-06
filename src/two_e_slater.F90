@@ -521,6 +521,24 @@ program integrals
 
     write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
 
+    print *, 'Cleaning ERI matrix'
+    call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
+
+
+!  double precision :: H(10,10), V(10,2), E(4), H_diag(10)
+!  V = 0.d0
+!  call random_number(H)
+!  H = H + transpose(H)
+!  call davidson(H, 10, 10, 2, H_diag, E, V, 10)
+!  print *, 'V'
+!  do i=1,10
+!    print *, V(i,1:2)
+!  enddo
+!  print *, '---'
+!  stop
+
+
+
 #ifdef HAVE_TREXIO
 
     trexio_filename = trim(MOLECULE)//'.h5'
@@ -574,6 +592,7 @@ program integrals
   call MPI_BARRIER (MPI_COMM_WORLD, ierr)
   call mpi_finalize(ierr)
 #endif
+
 
 end
 

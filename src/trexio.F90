@@ -34,7 +34,7 @@ subroutine trexio_write_basis(trexio_file)
   integer                        :: i, m, shell_num, prim_num
 
   integer, allocatable :: nucleus_index(:), shell_ang_mom(:), shell_index(:)
-  integer, allocatable :: r_power(:)
+  integer, allocatable :: r_power(:), ao_shell(:)
   double precision, allocatable :: exponent(:), coefficient(:), shell_factor(:)
   double precision, allocatable :: prim_factor(:), ao_normalization(:)
 
@@ -66,13 +66,14 @@ subroutine trexio_write_basis(trexio_file)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
   allocate(nucleus_index(shell_num), shell_ang_mom(shell_num),       &
-      shell_factor(shell_num), r_power(shell_num))
+      shell_factor(shell_num), r_power(shell_num), ao_shell(nbasis))
   allocate(shell_index(prim_num), exponent(prim_num), coefficient(prim_num),&
       prim_factor(prim_num))
 
   m = 0
   do i=1,nbasis
     m = m+1
+    ao_shell(i) = m
     select case (orb_name_full(i))
       case ('1S')
         shell_ang_mom(m) = 0
@@ -141,6 +142,9 @@ subroutine trexio_write_basis(trexio_file)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
   rc = trexio_write_ao_num(trexio_file, nbasis)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
+  rc = trexio_write_ao_shell(trexio_file, ao_shell)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
   allocate(ao_normalization(nbasis))

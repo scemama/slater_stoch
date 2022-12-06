@@ -16,6 +16,8 @@ COMMON_SOURCE = \
  src/build_c_g_gauss_STO.F90 \
  src/build_gaussian_expansion_of_orbitals.F90 \
  src/build_mapping_ijkl.F90 \
+ src/davidson.F90 \
+ src/davidson_clean.F90 \
  src/doublefact.F90 \
  src/fact.F90 \
  src/gaunt.F90 \
