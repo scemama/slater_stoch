@@ -17,7 +17,6 @@ COMMON_SOURCE = \
  src/build_gaussian_expansion_of_orbitals.F90 \
  src/build_mapping_ijkl.F90 \
  src/davidson.F90 \
- src/davidson_clean.F90 \
  src/doublefact.F90 \
  src/fact.F90 \
  src/gaunt.F90 \
@@ -70,6 +69,7 @@ two_e_slater_SOURCES = $(COMMON_SOURCE) \
  src/compute_jacobian_and_pi0.F90 \
  src/compute_lmin_lmax.F90 \
  src/count_multi_center_integrals.F90 \
+ src/davidson_clean.F90 \
  src/dierfc.F90 \
  src/draw_configuration.F90 \
  src/gauss_ijkl.F90 \

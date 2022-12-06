@@ -38,25 +38,38 @@ subroutine compute_int_slater(i,k,j,l,ijkl_gaus)
   power(1)=0
   if(orb.eq.'2S')power(1)=1
   if(orb.eq.'3S')power(1)=2
+  if(orb.eq.'4S')power(1)=3
   if(orb.eq.'3P')power(1)=1
+  if(orb.eq.'4P')power(1)=2
+  if(orb.eq.'4D')power(1)=1
 
   orb=orb_name(k)
   power(2)=0
   if(orb.eq.'2S')power(2)=1
   if(orb.eq.'3S')power(2)=2
+  if(orb.eq.'4S')power(2)=3
   if(orb.eq.'3P')power(2)=1
+  if(orb.eq.'4P')power(2)=2
+  if(orb.eq.'4D')power(2)=1
 
   orb=orb_name(j)
   power(3)=0
   if(orb.eq.'2S')power(3)=1
   if(orb.eq.'3S')power(3)=2
+  if(orb.eq.'4S')power(3)=3
   if(orb.eq.'3P')power(3)=1
+  if(orb.eq.'4P')power(3)=2
+  if(orb.eq.'4D')power(3)=1
 
   orb=orb_name(l)
   power(4)=0
   if(orb.eq.'2S')power(4)=1
   if(orb.eq.'3S')power(4)=2
+  if(orb.eq.'4S')power(4)=3
   if(orb.eq.'3P')power(4)=1
+  if(orb.eq.'4P')power(4)=2
+  if(orb.eq.'4D')power(4)=1
 
   ijkl_gaus=ijkl_slater_xnynzn(nix,niy,niz,power,gam)
 end
+

@@ -523,20 +523,15 @@ program integrals
 
     print *, 'Cleaning ERI matrix'
     call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
-
-
-!  double precision :: H(10,10), V(10,2), E(4), H_diag(10)
-!  V = 0.d0
-!  call random_number(H)
-!  H = H + transpose(H)
-!  call davidson(H, 10, 10, 2, H_diag, E, V, 10)
-!  print *, 'V'
-!  do i=1,10
-!    print *, V(i,1:2)
-!  enddo
-!  print *, '---'
-!  stop
-
+!    do kcp=1,nint
+!       if ((moy(kcp) > ijkl_gaus(kcp)).and.(moy(kcp)-2.d0*moy2(kcp) > ijkl_gaus(kcp))) then
+!         moy(kcp) = moy(kcp) - 2.d0*moy2(kcp)
+!       else if ((moy(kcp) < ijkl_gaus(kcp)).and.(moy(kcp)+2.d0*moy2(kcp) < ijkl_gaus(kcp))) then
+!         moy(kcp) = moy(kcp) + 2.d0*moy2(kcp)
+!       else
+!        moy(kcp) = ijkl_gaus(kcp)
+!       endif
+!    enddo
 
 
 #ifdef HAVE_TREXIO
