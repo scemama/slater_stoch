@@ -11,7 +11,7 @@ subroutine multiply_poly(b,nb,c,nc,d,nd)
   double precision, intent(inout) :: d(0:nb+nc)
 
   integer                        :: ndtmp
-  integer                        :: ib, ic, id, k
+  integer                        :: ib, ic
   if(ior(nc,nb) >= 0) then ! True if nc>=0 and nb>=0
     continue
   else

@@ -12,7 +12,6 @@ COMMON_SOURCE = \
  src/bigF.F90 \
  src/binom_func.F90 \
  src/binom.F90 \
- src/binom_transp.F90 \
  src/build_c_g_gauss_STO.F90 \
  src/build_gaussian_expansion_of_orbitals.F90 \
  src/build_mapping_ijkl.F90 \
@@ -47,7 +46,6 @@ COMMON_SOURCE = \
  src/read_basis.F90 \
  src/read_fit_SMILES.F90 \
  src/read_geometry.F90 \
- src/recentered_poly2.F90 \
  src/rint1.F90 \
  src/rint_large_n.F90 \
  src/rint.F90 \
