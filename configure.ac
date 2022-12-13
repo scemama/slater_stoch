@@ -17,13 +17,13 @@ AC_LANG(Fortran)
 AX_PROG_FC_MPI
 F77=$FC
 
-
-# Checks for libraries.
-## BLAS
 AS_CASE(["$FC"],
 [ifort*], [FCFLAGS="$FCFLAGS -mkl=sequential"], 
 [mpiifort*],  [FCFLAGS="$FCFLAGS -mkl=sequential"],
 [
+
+# Checks for libraries.
+## BLAS
 AC_LANG_PUSH(C)
 AX_BLAS([], [AC_MSG_ERROR([BLAS was not found.])])
 AC_LANG_POP()
@@ -38,6 +38,7 @@ LIBS="$LIBS $BLAS_LIBS"
 # Checks for typedefs, structures, and compiler characteristics.
 
 # Checks for library functions.
+AC_LANG_PUSH(C)
 AC_CHECK_FUNC([vderfcinv],[ AC_DEFINE([HAVE_VDERFINVC],[1],[vdErfInvc found]) ])
 
 AC_ARG_WITH([trexio],
@@ -64,6 +65,7 @@ AS_CASE([$with_trexio],
    AC_DEFINE([HAVE_TREXIO], [1], [Define if TREXIO support is available])
    ARGS="${ARGS} trexio"
   ])
+AC_LANG_POP
 
 
 AC_CONFIG_FILES([Makefile])
