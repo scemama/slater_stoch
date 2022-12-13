@@ -1,10 +1,17 @@
 ACLOCAL_AMFLAGS = -I m4
 
-CLEANFILES=trexio.mod common_data.mod
+MODULES = trexio.mod common_data.mod
 
 bin_PROGRAMS = one_e_slater two_e_slater
+BUILT_SOURCES = $(MODULES)
+
+trexio.mod: src/trexio.o
+common_data.mod: src/common_data.o
+
+CLEANFILES= $(MODULES)
 
 COMMON_SOURCE = \
+ src/trexio.F90 \
  src/common_data.F90 \
  src/add_poly_multiply.F90 \
  src/allocate_basis.F90 \
@@ -51,16 +58,16 @@ COMMON_SOURCE = \
  src/rint.F90 \
  src/rint_sum.F90 \
  src/smallg.F90 \
- src/trexio.F90 \
  src/u_gauss.F90 \
- src/u_orb.F90 \
- src/write_STO_in_file_info_basis.F90
+ src/u_orb.F90
 
-one_e_slater_SOURCES = $(COMMON_SOURCE) \
+MODULES_O = src/common_data.$(OBJEXT) src/trexio.$(OBJEXT)
+
+one_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) \
  src/one_e_slater.F90
 
 
-two_e_slater_SOURCES = $(COMMON_SOURCE) \
+two_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) \
  src/compare_nuclei.F90 \
  src/compute_densities.F90 \
  src/compute_int_slater.F90 \
@@ -74,6 +81,6 @@ two_e_slater_SOURCES = $(COMMON_SOURCE) \
  src/ijkl_slater.F90 \
  src/ijkl_slater_xnynzn.F90 \
  src/kinetic_slater.F90 \
- src/two_e_slater.F90 
+ src/two_e_slater.F90
 
 

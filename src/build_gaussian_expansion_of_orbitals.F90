@@ -47,7 +47,6 @@ subroutine build_gaussian_expansion_of_orbitals()
         g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
         call build_c_g_gauss_STO(ibasis)
-        call write_STO_in_file_info_basis(ibasis)
 
       endif  !1S
 
@@ -79,7 +78,6 @@ subroutine build_gaussian_expansion_of_orbitals()
         g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
         call build_c_g_gauss_STO(ibasis)
-        call write_STO_in_file_info_basis(ibasis)
 
       endif !2S
 
@@ -111,7 +109,6 @@ subroutine build_gaussian_expansion_of_orbitals()
         g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
         call build_c_g_gauss_STO(ibasis)
-        call write_STO_in_file_info_basis(ibasis)
 
       endif !3S
 
@@ -149,7 +146,6 @@ subroutine build_gaussian_expansion_of_orbitals()
           g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
           call build_c_g_gauss_STO(ibasis)
-          call write_STO_in_file_info_basis(ibasis)
 
         enddo ! m
 
@@ -189,7 +185,6 @@ subroutine build_gaussian_expansion_of_orbitals()
           g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
           call build_c_g_gauss_STO(ibasis)
-          call write_STO_in_file_info_basis(ibasis)
 
         enddo ! m
 
@@ -257,7 +252,6 @@ subroutine build_gaussian_expansion_of_orbitals()
           g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
           call build_c_g_gauss_STO(ibasis)
-          call write_STO_in_file_info_basis(ibasis)
 
         enddo ! m
 
@@ -349,7 +343,6 @@ subroutine build_gaussian_expansion_of_orbitals()
           g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
           call build_c_g_gauss_STO(ibasis)
-          call write_STO_in_file_info_basis(ibasis)
 
         enddo ! m
 
@@ -471,7 +464,6 @@ subroutine build_gaussian_expansion_of_orbitals()
           g_slater(ibasis)=g_contract(n_contract(ibasis),ibasis)
 
           call build_c_g_gauss_STO(ibasis)
-          call write_STO_in_file_info_basis(ibasis)
 
         enddo !m
 
