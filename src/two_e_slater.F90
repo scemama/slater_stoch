@@ -65,7 +65,7 @@ program integrals
   integer                        :: i, j, k, l, k_sort2, kkk, kcp, ll
   integer                        :: nint_zero, i_value, n_zero_cauchy, num
   integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
-  double precision               :: aread, t0, t1, factor, r2_mod, r1_mod, r12_2
+  double precision               :: a_ZV, t0, t1, factor, r2_mod, r1_mod, r12_2
   double precision               :: e_tot_ijkl, error_max, errmoy_ijkl, dmoy_ijkl
   double precision               :: a_ijkln, diff_ijkl, diff_ijklmax
 
@@ -76,11 +76,12 @@ program integrals
   integer           :: rc
   integer(trexio_t) :: trexio_file
   character(128)    :: err_message
-  integer, parameter:: BUFSIZE = 1048576
+  integer, parameter:: BUFSIZE = 32768
   integer           :: indx(4,BUFSIZE)
   double precision  :: vals(BUFSIZE)
   integer*8         :: icount, offset
 #endif
+
 
 #ifdef HAVE_MPI
   call mpi_init(ierr)
@@ -106,8 +107,9 @@ program integrals
     write(filename_out_ijkl,'(A9)')'bielec_ao'
   endif
 
+  seed(1) = 1+(num_simulation-1)*10000
 #ifdef HAVE_MPI
-  seed(1) = mpi_rank+1+(num_simulation-1)*10000
+  seed(1) = mpi_rank+seed(1)
 #endif
   do i_rand=2,12
     seed(i_rand) = i_rand
@@ -141,8 +143,8 @@ program integrals
     read(5,'(a80)')charabid
     if(mpi_rank.eq.0)write(6,'(a80)')charabid
   enddo
-  read(5,*)aread
-  if(mpi_rank.eq.0)print*,'aread=',aread
+  read(5,*)a_ZV
+  if(mpi_rank.eq.0)print*,'a_ZV=',a_ZV
 
   !*****************
   ! END READ INPUT
@@ -205,8 +207,8 @@ program integrals
   end if
 
   allocate(precond(nbasis,nbasis))
-  do i=1,nbasis
-    do k=1,nbasis
+  do k=1,nbasis
+    do i=1,nbasis
       precond(i,k)=gauss_ijkl(i,k,i,k)
     enddo
   enddo
@@ -233,13 +235,6 @@ program integrals
       n_zero_cauchy=n_zero_cauchy+1
     else
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
-    endif
-
-    if( nint.ge.10.and.mod(kcp,nint/10).eq.0)then
-      kkk=kkk+1
-      call cpu_time(t1)
-      write(*,'(a,i3,a,f22.15)')' CPU TIME block',kkk,' of GAUSSIAN TWO-electron',t1-t0
-      t0=t1
     endif
 
   enddo !kcp
@@ -275,12 +270,6 @@ program integrals
   !!******************
   !!
   call cpu_time(t0)
-
-  do i=1,nbasis
-    do k=1,nbasis
-      a_ZV(i,k)=aread
-    enddo
-  enddo
 
   nbl=10
 
@@ -373,7 +362,7 @@ program integrals
         do i=k,nbasis
           if(i_tab_mc(i,k).eq.1)then
             ik = (k-1)*nbasis+i
-            factor = 0.5d0 * a_ZV(i,k) /(g_slater(i)+g_slater(k))
+            factor = 0.5d0 * a_ZV /(g_slater(i)+g_slater(k))
             do kw=1,nw
               r1_mod=dsqrt(r1(kw,1)*r1(kw,1)+r1(kw,2)*r1(kw,2)+r1(kw,3)*r1(kw,3))
               r2_mod=dsqrt(r2(kw,1)*r2(kw,1)+r2(kw,2)*r2(kw,2)+r2(kw,3)*r2(kw,3))

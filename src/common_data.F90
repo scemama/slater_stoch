@@ -19,7 +19,7 @@ module common_data
   integer, parameter             :: n_atoms_max=92                         ! Max atomic number
   integer, parameter             :: n_contract_max=20                      ! Max number of contractions
   integer, parameter             :: n_gauss_max=ng_max*n_contract_max
-  integer, parameter             :: n_slater_max=100                       ! Max number of STO per atom type
+  integer, parameter             :: n_slater_max=32                        ! Max number of STO per atom type
   integer, allocatable           :: n_b(:)                                 ! number of basis functions per atom type (S,P,D,F, or G) 
   integer, allocatable           :: n_cont_b(:,:)                          ! number of contracted primitives for the radial part
   double precision, allocatable  :: gamma_b(:,:,:)                         ! Exponent in basis
@@ -45,7 +45,6 @@ module common_data
   integer, allocatable           :: ng(:,:)                           ! Number of Gaussians used to fit a contracted STO
   integer, allocatable           :: n_gauss(:)                        ! Number of Gaussians used to fit an STO
   double precision, allocatable  :: center(:,:)                       ! Where the basis functions are centered
-  double precision, allocatable  :: a_ZV(:,:)                                ! Zero-variance parameter
   double precision, allocatable  :: c_gauss(:,:,:)                           ! Coefficients of contracted Gaussians
   double precision, allocatable  :: g_gauss(:,:)                             ! Exponents of contracted Gaussians
   double precision, allocatable  :: g_slater(:)                              ! Exponent of STO
