@@ -186,11 +186,9 @@ program integrals
   if(mpi_rank.eq.0)print*,'Analytic calculation of APPROXIMATE GAUSSIAN one-electron integrals for ZV'
   if(mpi_rank.eq.0)print*,'**************************************************************************'
 
-  call cpu_time(t0)
   nint_zero=0
   i_value=1
   n_zero_cauchy=0
-  call cpu_time(t0)
   kkk=0
 
   num=nbasis**2
@@ -198,9 +196,9 @@ program integrals
     call one_elect(i,i,Sij,Vij,Kij)
   enddo
 
-  if(mpi_rank.eq.0)print*,'********************************************************************'
-  if(mpi_rank.eq.0)print*,'ANALYTIC CALCULATION OF APPROXIMATE GAUSSIAN TWO-ELECTRON INTREGRALS'
-  if(mpi_rank.eq.0)print*,'********************************************************************'
+  if(mpi_rank.eq.0)print*,'*******************************************************************'
+  if(mpi_rank.eq.0)print*,'ANALYTIC CALCULATION OF APPROXIMATE GAUSSIAN TWO-ELECTRON INTEGRALS'
+  if(mpi_rank.eq.0)print*,'*******************************************************************'
 
   if (mpi_rank == 0) then
     call count_multi_center_integrals
@@ -244,6 +242,8 @@ program integrals
   call mpi_allreduce(MPI_IN_PLACE,ijkl_gaus, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 #endif
 
+  call cpu_time(t1)
+  if (mpi_rank==0) print *, 'Time for Gaussian integrals : ', t1-t0, ' seconds'
 
 !  if (mpi_rank.eq.0) then
 !    !! Write gaussian <ij|kl>
@@ -315,6 +315,8 @@ program integrals
   enddo
   !! end calculation ***********************************
 
+  call cpu_time(t1)
+  print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
 
   do kcp=1,nint
     if(mono_center(kcp).eq.0)then
@@ -510,7 +512,7 @@ program integrals
 
     write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
 
-    print *, 'Cleaning ERI matrix'
+    if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
     call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
 !    do kcp=1,nint
 !       if ((moy(kcp) > ijkl_gaus(kcp)).and.(moy(kcp)-2.d0*moy2(kcp) > ijkl_gaus(kcp))) then

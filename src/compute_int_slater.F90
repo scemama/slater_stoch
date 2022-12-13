@@ -30,16 +30,26 @@ subroutine compute_int_slater(i,k,j,l,ijkl_gaus)
   niz(4)=npower(3,l)
 
   orb=orb_name(i)
-  if(orb.ne.'1S'.and.orb.ne.'2S'.and.orb.ne.'3S'.and.orb.ne.'2P'.and.orb.ne.'3P'.and.orb.ne.'3D')then
+  if(     orb.ne.'1S' &
+     .and.orb.ne.'2S' &
+     .and.orb.ne.'2P' &
+     .and.orb.ne.'3S' &
+     .and.orb.ne.'3P' &
+     .and.orb.ne.'3D' &
+     .and.orb.ne.'4S' &
+     .and.orb.ne.'4P' &
+     .and.orb.ne.'4D' &
+     .and.orb.ne.'4F' &
+     )then
     print*,'orb=',orb
-    stop 'pb in compute_in_slater'
+    stop 'pb in compute_int_slater'
   endif
 
   power(1)=0
   if(orb.eq.'2S')power(1)=1
   if(orb.eq.'3S')power(1)=2
-  if(orb.eq.'4S')power(1)=3
   if(orb.eq.'3P')power(1)=1
+  if(orb.eq.'4S')power(1)=3
   if(orb.eq.'4P')power(1)=2
   if(orb.eq.'4D')power(1)=1
 
@@ -47,8 +57,8 @@ subroutine compute_int_slater(i,k,j,l,ijkl_gaus)
   power(2)=0
   if(orb.eq.'2S')power(2)=1
   if(orb.eq.'3S')power(2)=2
-  if(orb.eq.'4S')power(2)=3
   if(orb.eq.'3P')power(2)=1
+  if(orb.eq.'4S')power(2)=3
   if(orb.eq.'4P')power(2)=2
   if(orb.eq.'4D')power(2)=1
 
@@ -56,8 +66,8 @@ subroutine compute_int_slater(i,k,j,l,ijkl_gaus)
   power(3)=0
   if(orb.eq.'2S')power(3)=1
   if(orb.eq.'3S')power(3)=2
-  if(orb.eq.'4S')power(3)=3
   if(orb.eq.'3P')power(3)=1
+  if(orb.eq.'4S')power(3)=3
   if(orb.eq.'4P')power(3)=2
   if(orb.eq.'4D')power(3)=1
 
@@ -65,8 +75,8 @@ subroutine compute_int_slater(i,k,j,l,ijkl_gaus)
   power(4)=0
   if(orb.eq.'2S')power(4)=1
   if(orb.eq.'3S')power(4)=2
-  if(orb.eq.'4S')power(4)=3
   if(orb.eq.'3P')power(4)=1
+  if(orb.eq.'4S')power(4)=3
   if(orb.eq.'4P')power(4)=2
   if(orb.eq.'4D')power(4)=1
 

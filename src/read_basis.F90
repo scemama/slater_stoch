@@ -60,7 +60,6 @@ subroutine read_basis(filename_basis)
     end do
   end do
   nbasis = ibasis
-  print *, 'Nbasis = ', nbasis
 
   call allocate_basis
 

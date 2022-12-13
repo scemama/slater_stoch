@@ -32,7 +32,7 @@ double precision function ijkl_slater_xnynzn(nix,niy,niz,power,gamma)
   
   do k=1,4
     ntot=nix(k)+niy(k)+niz(k)
-    if(ntot.gt.max_ni)stop ' x^nx x^nx x^nx Slater no yet implemented'
+    if(ntot.gt.max_ni)stop ' x^nx x^nx x^nx Slater not yet implemented'
   enddo
   
   pi=dacos(-1.d0)
