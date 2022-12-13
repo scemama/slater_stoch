@@ -20,7 +20,10 @@ F77=$FC
 
 # Checks for libraries.
 ## BLAS
-AS_IF([text "x$FC" = xifort], [FCFLAGS="$FCFLAGS -mkl=sequential"], [
+AS_CASE(["$FC"],
+[ifort*], [FCFLAGS="$FCFLAGS -mkl=sequential"], 
+[mpiifort*],  [FCFLAGS="$FCFLAGS -mkl=sequential"],
+[
 AC_LANG_PUSH(C)
 AX_BLAS([], [AC_MSG_ERROR([BLAS was not found.])])
 AC_LANG_POP()
