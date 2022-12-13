@@ -23,6 +23,7 @@ F77=$FC
 AC_LANG_PUSH(C)
 AX_BLAS([], [AC_MSG_ERROR([BLAS was not found.])])
 AC_LANG_POP()
+LIBS="$LIBS $BLAS_LIBS"
 
 
 
