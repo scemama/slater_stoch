@@ -6,10 +6,6 @@ subroutine build_gaussian_expansion_of_orbitals()
 
   integer, external :: number_atom
 
-  open(21,file='info_basis')
-  open(22,file='orbital_coefficients_gaussian_expansion')
-  open(23,file='info_simplified')
-
   call read_fit_SMILES
 
   ibasis = 0
