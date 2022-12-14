@@ -281,7 +281,7 @@ program integrals
     l=ls(kcp)
     call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
     mono_center(kcp)=0
-    if(ndiff.eq.1)mono_center(kcp)=1
+!    if(ndiff.eq.1)mono_center(kcp)=1  ! Disable mono-slater integrals
   enddo
 
   if(mpi_rank.eq.0)then
