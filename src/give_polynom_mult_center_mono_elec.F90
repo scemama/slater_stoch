@@ -20,7 +20,6 @@ subroutine give_polynom_mult_center_mono_elec(A_center,B_center,alpha,beta,power
   integer                        :: n_pt_tmp
   !print*,'n_pt_in = ',n_pt_in
   accu = 0.d0
-  !COMPTEUR irp_rdtsc1 = irp_rdtsc()
   p = alpha+beta
   p_inv = 1.d0/p
   p_inv_2 = 0.5d0/p

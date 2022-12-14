@@ -22,7 +22,7 @@ program integrals
   double precision, allocatable  :: e_G_ijkl(:)
   double precision, allocatable  :: e_test_ijkl(:)
   double precision, allocatable  :: error_ijkl(:)
-  double precision, allocatable  :: mono_center(:)
+  integer, allocatable           :: mono_center(:)
   double precision, allocatable  :: moy(:), moy2(:), moy2t(:)
   double precision, allocatable  :: G_center(:,:,:)
 
@@ -65,9 +65,9 @@ program integrals
   integer                        :: i, j, k, l, k_sort2, kkk, kcp, ll
   integer                        :: nint_zero, i_value, n_zero_cauchy, num
   integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
-  double precision               :: a_ZV, t0, t1, factor, r2_mod, r1_mod, r12_2
+  double precision               :: t0, t1, factor, r2_mod, r1_mod, r12_2
   double precision               :: e_tot_ijkl, error_max, errmoy_ijkl, dmoy_ijkl
-  double precision               :: a_ijkln, diff_ijkl, diff_ijklmax
+  double precision               :: a_ijkln, diff_ijkl, diff_ijklmax, f
 
   double precision, external     :: gauss_ijkl
 
@@ -111,10 +111,12 @@ program integrals
 #ifdef HAVE_MPI
   seed(1) = mpi_rank+seed(1)
 #endif
-  do i_rand=2,12
-    seed(i_rand) = i_rand
+  do i_rand=2,size(seed)
+    seed(i_rand) = i_rand*seed(1)
   enddo
   call random_seed(put=seed)
+  call random_number(r1)
+
 
   !*****************
   ! BEGIN READ INPUT
@@ -273,16 +275,16 @@ program integrals
 
   nbl=10
 
+  mono_center(:) = 0
   !! Determination of one-center bielectronic
-  do kcp=1,nint
-    i=is(kcp)
-    k=ks(kcp)
-    j=js(kcp)
-    l=ls(kcp)
-    call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
-    mono_center(kcp)=0
-!    if(ndiff.eq.1)mono_center(kcp)=1  ! Disable mono-slater integrals
-  enddo
+!  do kcp=1,nint
+!    i=is(kcp)
+!    k=ks(kcp)
+!    j=js(kcp)
+!    l=ls(kcp)
+!    call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
+!    if(ndiff.eq.1)mono_center(kcp)=1 
+!  enddo
 
   if(mpi_rank.eq.0)then
     print*,'*********************************'
@@ -303,29 +305,29 @@ program integrals
   enddo
 
   !**************************************************
-  !! Exact calculation of monocenter Slater integrals
-  do kcp=1,nint
-    i=is(kcp)
-    k=ks(kcp)
-    j=js(kcp)
-    l=ls(kcp)
-    if(mono_center(kcp).eq.1)then
-      call compute_int_slater(i,k,j,l,ijkl(kcp))
-    endif
-  enddo
-  !! end calculation ***********************************
+!  !! Exact calculation of monocenter Slater integrals
+!  do kcp=1,nint
+!    i=is(kcp)
+!    k=ks(kcp)
+!    j=js(kcp)
+!    l=ls(kcp)
+!    if(mono_center(kcp).eq.1)then
+!      call compute_int_slater(i,k,j,l,ijkl(kcp))
+!    endif
+!  enddo
+!  !! end calculation ***********************************
 
-  call cpu_time(t1)
-  print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
+!  call cpu_time(t1)
+!  if (mpi_rank == 0) print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
 
-  do kcp=1,nint
-    if(mono_center(kcp).eq.0)then
-      ijkl(kcp)=0.d0
-      ijkl2(kcp)=0.d0
-    endif
-  enddo
+!  do kcp=1,nint
+!    if(mono_center(kcp).eq.0)then
+!      ijkl(kcp)=0.d0
+!      ijkl2(kcp)=0.d0
+!    endif
+!  enddo
 
-  !! Determinate which i j are used in computation of W_S and W_G
+  !! Determine which i j are used in computation of W_S and W_G
   !! i_tab_mc(i,k)=1  W_S and W_G can be computed
   allocate(i_tab_mc(nbasis,nbasis))
   do k=1,nbasis
@@ -400,6 +402,7 @@ program integrals
             d_x(2) = ut1(kw,2,ik)-ut2(kw,2,jl)
             d_x(3) = ut1(kw,3,ik)-ut2(kw,3,jl)
             r12_2 = d_x(1)*d_x(1) + d_x(2)*d_x(2) + d_x(3)*d_x(3)
+
             factor=rjacob(kw)/pi_0(kw)
             weight  (kw)=factor* rho  (kw,ik,1)*rho  (kw,jl,2)
             weight_G(kw)=factor* rho_G(kw,ik,1)*rho_G(kw,jl,2)
@@ -420,7 +423,7 @@ program integrals
 
     enddo !npts_two_elec
 
-    factor = 1.d0 / npts_two_elec
+    factor = 1.d0 / dble(npts_two_elec)
     do kcp=1,nint
       if(mono_center(kcp).eq.0)then
         e_S_ijkl(kcp)=e_S_ijkl(kcp) * factor
@@ -513,12 +516,25 @@ program integrals
     write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
 
     if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
+
     call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
+
+    ! use W(i,j) - |W(i,j)|/W(i,j) * err(i,j) for off-diagonal and
+    ! use W(i,i) + |W(i,i)|/W(i,i) * err(i,i) for diagonal to make 
+    ! the matrix positive definite
 !    do kcp=1,nint
-!       if ((moy(kcp) > ijkl_gaus(kcp)).and.(moy(kcp)-2.d0*moy2(kcp) > ijkl_gaus(kcp))) then
-!         moy(kcp) = moy(kcp) - 2.d0*moy2(kcp)
-!       else if ((moy(kcp) < ijkl_gaus(kcp)).and.(moy(kcp)+2.d0*moy2(kcp) < ijkl_gaus(kcp))) then
-!         moy(kcp) = moy(kcp) + 2.d0*moy2(kcp)
+!       i=is(kcp)
+!       k=ks(kcp)
+!       j=js(kcp)
+!       l=ls(kcp)
+!       f = 2.d0
+!       if ( ( (i==j).and.(k==l) ) .or. &
+!            ( (k==j).and.(i==l) ) ) f = -f
+!
+!       if ((moy(kcp) > ijkl_gaus(kcp)).and.(moy(kcp)-f*moy2(kcp) > ijkl_gaus(kcp))) then
+!         moy(kcp) = moy(kcp) - f*moy2(kcp)
+!       else if ((moy(kcp) < ijkl_gaus(kcp)).and.(moy(kcp)+f*moy2(kcp) < ijkl_gaus(kcp))) then
+!         moy(kcp) = moy(kcp) + f*moy2(kcp)
 !       else
 !        moy(kcp) = ijkl_gaus(kcp)
 !       endif
