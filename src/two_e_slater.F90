@@ -5,6 +5,7 @@ program integrals
   use trexio
 #endif
 
+  implicit none
 #ifdef HAVE_MPI
   include 'mpif.h'
 #endif
@@ -20,9 +21,8 @@ program integrals
 
   double precision, allocatable  :: e_S_ijkl(:)
   double precision, allocatable  :: e_G_ijkl(:)
-  double precision, allocatable  :: e_test_ijkl(:)
   double precision, allocatable  :: error_ijkl(:)
-  double precision, allocatable  :: mono_center(:)
+  integer, allocatable           :: mono_center(:)
   double precision, allocatable  :: moy(:), moy2(:), moy2t(:)
   double precision, allocatable  :: G_center(:,:,:)
 
@@ -62,14 +62,17 @@ program integrals
   integer*4                      :: put(33)
 
   integer                        :: i_rand, num_simulation, npts_two_elec
-  integer                        :: i, j, k, l, k_sort2, kkk, kcp, ll
+  integer                        :: i, j, k, l, k_sort2, kkk, ll, q, rank
+  integer*8                      :: kcp
   integer                        :: nint_zero, i_value, n_zero_cauchy, num
   integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
-  double precision               :: a_ZV, t0, t1, factor, r2_mod, r1_mod, r12_2
+  double precision               :: t0, t1, factor, r2_mod, r1_mod, r12_2
   double precision               :: e_tot_ijkl, error_max, errmoy_ijkl, dmoy_ijkl
-  double precision               :: a_ijkln, diff_ijkl, diff_ijklmax
+  double precision               :: a_ijkln, diff_ijkl, diff_ijklmax, f
 
   double precision, external     :: gauss_ijkl
+  integer :: xi(8), xj(8), xk(8), xl(8), ii, jj
+
 
 #ifdef HAVE_TREXIO
   character*(128)   :: trexio_filename
@@ -111,10 +114,12 @@ program integrals
 #ifdef HAVE_MPI
   seed(1) = mpi_rank+seed(1)
 #endif
-  do i_rand=2,12
-    seed(i_rand) = i_rand
+  do i_rand=2,size(seed)
+    seed(i_rand) = i_rand*seed(1)
   enddo
   call random_seed(put=seed)
+  call random_number(r1)
+
 
   !*****************
   ! BEGIN READ INPUT
@@ -155,7 +160,7 @@ program integrals
   if(mpi_rank.eq.0)print*,'ENUCL=',enucl
 
   call read_basis(filename_basis)
-  call build_gaussian_expansion_of_orbitals(mpi_rank)
+  call build_gaussian_expansion_of_orbitals()
 
   if(mpi_rank.eq.0)write(*,*)'**********************************'
   if(mpi_rank.eq.0)write(*,*)'Number of basis functions ',nbasis
@@ -174,7 +179,6 @@ program integrals
   allocate(ijkl(nint),ijkl2(nint))
   allocate(e_S_ijkl(nint))
   allocate(e_G_ijkl(nint))
-  allocate(e_test_ijkl(nint))
   allocate(error_ijkl(nint))
   allocate(mono_center(nint))
   allocate(moy(nint), moy2(nint), moy2t(nint))
@@ -233,6 +237,7 @@ program integrals
       n_zero_cauchy=n_zero_cauchy+1
     else
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
+!      ijkl_gaus(kcp)=0.d0
     endif
 
   enddo !kcp
@@ -273,16 +278,16 @@ program integrals
 
   nbl=10
 
+  mono_center(:) = 0
   !! Determination of one-center bielectronic
-  do kcp=1,nint
-    i=is(kcp)
-    k=ks(kcp)
-    j=js(kcp)
-    l=ls(kcp)
-    call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
-    mono_center(kcp)=0
-!    if(ndiff.eq.1)mono_center(kcp)=1  ! Disable mono-slater integrals
-  enddo
+!  do kcp=1,nint
+!    i=is(kcp)
+!    k=ks(kcp)
+!    j=js(kcp)
+!    l=ls(kcp)
+!    call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
+!    if(ndiff.eq.1)mono_center(kcp)=1 
+!  enddo
 
   if(mpi_rank.eq.0)then
     print*,'*********************************'
@@ -303,29 +308,29 @@ program integrals
   enddo
 
   !**************************************************
-  !! Exact calculation of monocenter Slater integrals
-  do kcp=1,nint
-    i=is(kcp)
-    k=ks(kcp)
-    j=js(kcp)
-    l=ls(kcp)
-    if(mono_center(kcp).eq.1)then
-      call compute_int_slater(i,k,j,l,ijkl(kcp))
-    endif
-  enddo
-  !! end calculation ***********************************
+!  !! Exact calculation of monocenter Slater integrals
+!  do kcp=1,nint
+!    i=is(kcp)
+!    k=ks(kcp)
+!    j=js(kcp)
+!    l=ls(kcp)
+!    if(mono_center(kcp).eq.1)then
+!      call compute_int_slater(i,k,j,l,ijkl(kcp))
+!    endif
+!  enddo
+!  !! end calculation ***********************************
 
-  call cpu_time(t1)
-  print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
+!  call cpu_time(t1)
+!  if (mpi_rank == 0) print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
 
-  do kcp=1,nint
-    if(mono_center(kcp).eq.0)then
-      ijkl(kcp)=0.d0
-      ijkl2(kcp)=0.d0
-    endif
-  enddo
+!  do kcp=1,nint
+!    if(mono_center(kcp).eq.0)then
+!      ijkl(kcp)=0.d0
+!      ijkl2(kcp)=0.d0
+!    endif
+!  enddo
 
-  !! Determinate which i j are used in computation of W_S and W_G
+  !! Determine which i j are used in computation of W_S and W_G
   !! i_tab_mc(i,k)=1  W_S and W_G can be computed
   allocate(i_tab_mc(nbasis,nbasis))
   do k=1,nbasis
@@ -351,7 +356,6 @@ program integrals
     do kcp=1,nint
       e_S_ijkl(kcp)=0.d0
       e_G_ijkl(kcp)=0.d0
-      e_test_ijkl(kcp)=0.d0
     enddo
 
     k_sort2=0
@@ -400,6 +404,7 @@ program integrals
             d_x(2) = ut1(kw,2,ik)-ut2(kw,2,jl)
             d_x(3) = ut1(kw,3,ik)-ut2(kw,3,jl)
             r12_2 = d_x(1)*d_x(1) + d_x(2)*d_x(2) + d_x(3)*d_x(3)
+
             factor=rjacob(kw)/pi_0(kw)
             weight  (kw)=factor* rho  (kw,ik,1)*rho  (kw,jl,2)
             weight_G(kw)=factor* rho_G(kw,ik,1)*rho_G(kw,jl,2)
@@ -408,7 +413,6 @@ program integrals
           enddo
           e_S_ijkl(kcp)=e_S_ijkl(kcp) + sum(weight  (1:nw)*r12_inv(1:nw))
           e_G_ijkl(kcp)=e_G_ijkl(kcp) + sum(weight_G(1:nw)*r12_inv(1:nw))
-          e_test_ijkl(kcp)=e_test_ijkl(kcp) + sum(r12_inv(1:nw))
 
         endif
       enddo !kcp
@@ -420,12 +424,11 @@ program integrals
 
     enddo !npts_two_elec
 
-    factor = 1.d0 / npts_two_elec
+    factor = 1.d0 / dble(npts_two_elec)
     do kcp=1,nint
       if(mono_center(kcp).eq.0)then
         e_S_ijkl(kcp)=e_S_ijkl(kcp) * factor
         e_G_ijkl(kcp)=e_G_ijkl(kcp) * factor
-        e_test_ijkl(kcp)=e_test_ijkl(kcp) * factor
       endif
     enddo
 
@@ -437,7 +440,7 @@ program integrals
       l=ls(kcp)
       if(i_value.ne.0)then
         if(mono_center(kcp).eq.0)then
-          e_tot_ijkl=e_S_ijkl(kcp)-e_G_ijkl(kcp)+ijkl_gaus(kcp)
+          e_tot_ijkl=e_S_ijkl(kcp)-e_G_ijkl(kcp) !+ijkl_gaus(kcp)
           ijkl(kcp)=ijkl(kcp)+e_tot_ijkl
           ijkl2(kcp)=ijkl2(kcp)+e_tot_ijkl*e_tot_ijkl
         endif
@@ -500,7 +503,7 @@ program integrals
       if( dabs(moy(kcp)).gt.1.d-6.and.(moy2(kcp).ne.0.d0))then
         errmoy_ijkl=errmoy_ijkl+moy2(kcp)
         dmoy_ijkl=dmoy_ijkl+1.d0
-        diff_ijkl=dabs(moy(kcp)-ijkl_gaus(kcp))/moy2(kcp)
+        diff_ijkl=dabs(moy(kcp))/moy2(kcp)
         if(diff_ijkl.gt.diff_ijklmax)diff_ijklmax=diff_ijkl
         if(diff_ijkl.gt.3.d0)then
           a_ijkln=a_ijkln+diff_ijkl
@@ -511,18 +514,19 @@ program integrals
     enddo
 
     write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
+  end if
 
-    if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
-    call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
-!    do kcp=1,nint
-!       if ((moy(kcp) > ijkl_gaus(kcp)).and.(moy(kcp)-2.d0*moy2(kcp) > ijkl_gaus(kcp))) then
-!         moy(kcp) = moy(kcp) - 2.d0*moy2(kcp)
-!       else if ((moy(kcp) < ijkl_gaus(kcp)).and.(moy(kcp)+2.d0*moy2(kcp) < ijkl_gaus(kcp))) then
-!         moy(kcp) = moy(kcp) + 2.d0*moy2(kcp)
-!       else
-!        moy(kcp) = ijkl_gaus(kcp)
-!       endif
-!    enddo
+  if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
+
+  moy(:) = moy(:)+ijkl_gaus(:)
+  if (mpi_rank == 0) then 
+    q=10
+    rank=min(20*nbasis, nbasis*nbasis)
+    rank=nbasis*nbasis
+    call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q, mpi_rank, mpi_size)
+  endif
+
+  if (mpi_rank == 0) then 
 
 
 #ifdef HAVE_TREXIO

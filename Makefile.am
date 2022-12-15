@@ -5,7 +5,7 @@ MODULES = trexio.mod common_data.mod
 bin_PROGRAMS = one_e_slater two_e_slater
 BUILT_SOURCES = $(MODULES)
 
-trexio.mod: src/trexio.o
+trexio.mod: src/trexio.o  src/common_data.o
 common_data.mod: src/common_data.o
 
 CLEANFILES= $(MODULES)
@@ -27,6 +27,7 @@ COMMON_SOURCE = \
  src/fact.F90 \
  src/gaunt.F90 \
  src/gaussian_product.F90 \
+ src/gauss.F90 \
  src/general_primitive_integral.F90 \
  src/give_explicit_poly_and_gaussian.F90 \
  src/give_polynom_mult_center_mono_elec.F90 \
@@ -61,6 +62,8 @@ COMMON_SOURCE = \
  src/u_gauss.F90 \
  src/u_orb.F90
 
+src/trexio.$(OBJEXT): src/common_data.$(OBJEXT)
+
 MODULES_O = src/common_data.$(OBJEXT) src/trexio.$(OBJEXT)
 
 one_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) \
@@ -81,6 +84,11 @@ two_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) \
  src/ijkl_slater.F90 \
  src/ijkl_slater_xnynzn.F90 \
  src/kinetic_slater.F90 \
+ src/ortho_qr.F90 \
+ src/ortho_svd.F90 \
+ src/randomized_svd.F90 \
+ src/svd.F90 \
+ src/svd_clean.F90 \
  src/two_e_slater.F90
 
 

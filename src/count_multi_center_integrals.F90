@@ -1,6 +1,7 @@
 subroutine count_multi_center_integrals
   use common_data
-  integer :: iac_1, iac_2, iac_3, iac_4, kcp
+  integer :: iac_1, iac_2, iac_3, iac_4
+  integer*8 :: kcp
   integer :: i, j, k, l, ndiff
 
   iac_1=0

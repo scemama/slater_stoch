@@ -53,5 +53,6 @@ module common_data
 
   double precision               :: c_fit_exp(ng_max,ng_max)                 ! SMILES fit
   double precision               :: g_fit_exp(ng_max,ng_max)                 ! SMILES fit
+  double precision               :: a_ZV
 
 end module

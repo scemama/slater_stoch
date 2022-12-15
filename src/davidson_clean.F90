@@ -2,7 +2,8 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
   implicit none
   ! Removes negative eigenvalues of the ERI matrix
 
-  integer, intent(in) :: nint, nbasis
+  integer*8, intent(in) :: nint
+  integer  , intent(in) :: nbasis
   double precision, intent(inout) :: moy(nint)
   integer, dimension(nint), intent(in) :: is, js, ks, ls
 
@@ -10,8 +11,8 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
   double precision, allocatable :: V(:,:), E(:)
 
   integer :: NMAX
-  integer :: i, j, k, l, kcp, kk, iter, shift, n, m, mmax
-  integer*8 :: ii, jj
+  integer :: i, j, k, l, kk, iter, shift, n, m, mmax
+  integer*8 :: ii, jj, kcp
   double precision :: r1, r2, hij
   double precision, allocatable :: W(:,:), U(:,:)
   double precision, allocatable :: Wt(:,:), Ut(:,:)
@@ -89,6 +90,9 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
        stop 'DSYGV Diagonalization failed'
     endif
 
+ do l=1,n
+ print *, l, E_tmp(l)
+ enddo
     do l=1,n
       if (E_tmp(l) >= 0.d0) exit
     end do
