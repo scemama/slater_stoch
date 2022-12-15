@@ -237,6 +237,7 @@ program integrals
       n_zero_cauchy=n_zero_cauchy+1
     else
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
+!      ijkl_gaus(kcp)=0.d0
     endif
 
   enddo !kcp

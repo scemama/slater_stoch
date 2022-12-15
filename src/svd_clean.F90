@@ -18,7 +18,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis)
   double precision, allocatable :: Wt(:,:), Ut(:,:)
   double precision, allocatable :: small_h(:,:), small_s(:,:), small_v(:,:)
 
-  double precision, external :: dnrm2
+  double precision, external :: dnrm2, ddot
   logical :: converged
 
   integer :: lwork, info, rank
@@ -70,22 +70,37 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis)
       W(ii,jj) = moy(kcp)
     enddo
 
-    allocate(U(n,rank), Vt(n,rank), D(rank))
-    call randomized_svd(W, size(W,1), U, size(U,1), D, Vt, size(Vt,1), &
-      n, n, 10, rank)
+    rank = n/2
+    allocate(U(n,rank))
+    allocate(D(n))
+    allocate(Vt(n,n))
+    do while (rank<=n)
+      D=1.d0
+      deallocate(U)
+      allocate(U(n,rank))
+      call randomized_svd(W, size(W,1), U, size(U,1), D, Vt, size(Vt,1), &
+        n, n, 10, rank)
+      if (D(rank) > 1.d-6) then
+        print *, 'rank=', rank, D(rank)
+        rank = min(n,rank+rank/2)
+      else
+        exit
+      endif
+    end do
+    print *, 'rank=', rank
+!    call svd(W,size(W,1),U,size(U,1),D,Vt,size(Vt,1),n,n)
 
-    deallocate(Vt)
     W(:,:) = 0.d0
     do k=1,rank
-     print *, k, D(k)
+     if (ddot(n, U(1,k), 1, Vt(k,1), size(Vt,1)) < 0.d0) cycle
      do j=1,n
        do i=1,n
-          W(i,j) = W(i,j) + D(k) * U(i,k) * U(j,k)
+          W(i,j) = W(i,j) + D(k) * U(i,k) * Vt(k,j)
         end do
       end do
     end do
 
-    deallocate(D)
+    deallocate(D, Vt, U)
 
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
@@ -93,7 +108,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis)
       moy(kcp) = W(ii,jj)
     enddo
 
-    deallocate(W,U)
+    deallocate(W)
     return
 
 

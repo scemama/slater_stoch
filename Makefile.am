@@ -27,6 +27,7 @@ COMMON_SOURCE = \
  src/fact.F90 \
  src/gaunt.F90 \
  src/gaussian_product.F90 \
+ src/gauss.F90 \
  src/general_primitive_integral.F90 \
  src/give_explicit_poly_and_gaussian.F90 \
  src/give_polynom_mult_center_mono_elec.F90 \

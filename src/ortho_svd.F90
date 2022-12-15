@@ -13,7 +13,7 @@ subroutine ortho_svd(A,LDA,m,n)
   if (m < n) then
     call ortho_qr(A,LDA,m,n)
   endif
-  allocate(U(m,n), D(n), Vt(n,n))
+  allocate(U(m,m), D(max(m,n)), Vt(n,n))
   call SVD(A,LDA,U,size(U,1),D,Vt,size(Vt,1),m,n)
   do j=1,n
     do i=1,m
