@@ -62,7 +62,7 @@ program integrals
   integer*4                      :: put(33)
 
   integer                        :: i_rand, num_simulation, npts_two_elec
-  integer                        :: i, j, k, l, k_sort2, kkk, ll
+  integer                        :: i, j, k, l, k_sort2, kkk, ll, q, rank
   integer*8                      :: kcp
   integer                        :: nint_zero, i_value, n_zero_cauchy, num
   integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
@@ -517,53 +517,13 @@ program integrals
 
     if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
-!    ! use W(i,j) - |W(i,j)|/W(i,j) * err(i,j) for off-diagonal and
-!    ! use W(i,i) + |W(i,i)|/W(i,i) * err(i,i) for diagonal to make 
-!    ! the matrix positive definite
-!    do kcp=1,nint
-!
-!        f = 10.d0
-!
-!        i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
-!        xi(1) = i ; xj(1) = j ; xk(1) = k ; xl(1) = l
-!        xi(2) = i ; xj(2) = l ; xk(2) = k ; xl(2) = j
-!        xi(3) = k ; xj(3) = j ; xk(3) = i ; xl(3) = l
-!        xi(4) = k ; xj(4) = l ; xk(4) = i ; xl(4) = j
-!        xi(5) = j ; xj(5) = i ; xk(5) = l ; xl(5) = k
-!        xi(6) = j ; xj(6) = k ; xk(6) = l ; xl(6) = i
-!        xi(7) = l ; xj(7) = i ; xk(7) = j ; xl(7) = k
-!        xi(8) = l ; xj(8) = k ; xk(8) = j ; xl(8) = i
-!
-!        do i=2,8
-!          do j=1,i-1
-!            if ( (xi(i) == xi(j)).and. &
-!                 (xj(i) == xj(j)).and. &
-!                 (xk(i) == xk(j)).and. &
-!                 (xl(i) == xl(j)) ) then
-!                xi(i) = 0
-!                exit
-!            endif
-!          enddo
-!        enddo
-!
-!        do i=1,8
-!          if (xi(i) == 0) cycle
-!          ii = xi(i) + (xj(i)-1)*nbasis ; jj = xk(i) + (xl(i)-1)*nbasis
-!          if (ii == jj) f = 0.d0 !-dabs(f)
-!        enddo
-!
-!       if ((moy(kcp) > 0.d0).and.(moy(kcp)-f*moy2(kcp) > 0.d0)) then
-!         moy(kcp) = moy(kcp) - f*moy2(kcp)
-!       else if ((moy(kcp) < 0.d0).and.(moy(kcp)+f*moy2(kcp) < 0.d0)) then
-!         moy(kcp) = moy(kcp) + f*moy2(kcp)
-!       else
-!        moy(kcp) = 0.d0
-!       endif
-!    enddo
 
      moy(:) = moy(:)+ijkl_gaus(:)
 !     call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
-     call svd_clean(moy, nint, is, js, ks, ls, nbasis)
+     q=10
+     rank=min(10*nbasis, nbasis*nbasis)
+     rank=nbasis*nbasis
+     call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
 
 
