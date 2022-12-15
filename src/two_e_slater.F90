@@ -294,8 +294,8 @@ program integrals
   endif
 
   allocate(G_center(3, nbasis, nbasis))
-  do i=1,nbasis
-    do j=1,nbasis
+  do j=1,nbasis
+    do i=1,nbasis
       do ll=1,3
         G_center(ll,i,j)= (g_slater(i)*center(ll,i)+g_slater(j)*center(ll,j))/(g_slater(i)+g_slater(j))
       enddo
