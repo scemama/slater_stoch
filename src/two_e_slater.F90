@@ -514,17 +514,19 @@ program integrals
     enddo
 
     write(*,*)'Error mean ijkl=',errmoy_ijkl/dmoy_ijkl,' error_max ',error_max
+  end if
 
-    if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
+  if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
+  moy(:) = moy(:)+ijkl_gaus(:)
+  if (mpi_rank == 0) then 
+    q=10
+    rank=min(20*nbasis, nbasis*nbasis)
+    rank=nbasis*nbasis
+    call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q, mpi_rank, mpi_size)
+  endif
 
-     moy(:) = moy(:)+ijkl_gaus(:)
-!     call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
-     q=10
-     rank=min(10*nbasis, nbasis*nbasis)
-     rank=nbasis*nbasis
-     call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
-
+  if (mpi_rank == 0) then 
 
 
 #ifdef HAVE_TREXIO

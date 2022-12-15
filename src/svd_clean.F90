@@ -73,8 +73,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
     enddo
 
     allocate(U(n,rank))
-    allocate(D(n))
-    allocate(Vt(n,n))
+    allocate(D(rank))
+    allocate(Vt(rank,n))
     D=1.d0
     call randomized_svd(W, size(W,1), U, size(U,1), D, Vt, size(Vt,1),&
         n, n, q, rank)
@@ -286,7 +286,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
     enddo
 
     ! SVD of Pt
-    allocate(UY(rank,rank), D(n), Vt(n,n))
+    allocate(UY(rank,rank), D(rank), Vt(rank,n))
     call svd(Pt,size(Pt,1),UY,size(UY,1),D,Vt,size(Vt,1),rank,n)
     deallocate(Pt)
 
@@ -298,7 +298,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
     moy(:) = 0.d0
     do kk=1,rank
       if (ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1)) < 0.d0) cycle
-      do kcp=1,nint
+      do kcp=1, nint
         i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
         ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
         moy(kcp) = moy(kcp) + D(kk) * U(ii,kk) * Vt(kk,jj)
