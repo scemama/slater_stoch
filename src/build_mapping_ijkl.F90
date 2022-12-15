@@ -8,10 +8,11 @@
 
 subroutine build_mapping_ijkl(nint_out)
   use common_data
-  integer, intent(out) :: nint_out
+  integer*8, intent(out) :: nint_out
   logical :: logic
   integer :: np, nint_theo
-  integer :: kcp, i, j, k, l
+  integer*8 :: kcp
+  integer :: i, j, k, l
   np=(nbasis*(nbasis+1))/2
   nint_theo=(np*(np+1))/2
 

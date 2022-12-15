@@ -3,6 +3,7 @@ subroutine compare_nuclei(ni,nj,nk,nl,ndiff)
   integer, intent(in)            :: ni, nj, nk, nl
   integer, intent(out)           :: ndiff
 
+  ndiff = -1
   ! 1111
   if ( (ni == nj) &
   .and.(nj == nk) &
@@ -135,5 +136,6 @@ subroutine compare_nuclei(ni,nj,nk,nl,ndiff)
     return
   endif
 
+  stop 'Problem in compare_nuclei'
 end
 

@@ -1,9 +1,9 @@
-subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
+subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis)
   implicit none
   ! Removes negative eigenvalues of the ERI matrix
 
   integer*8, intent(in) :: nint
-  integer  , intent(in) :: nbasis
+  integer, intent(in) :: nbasis
   double precision, intent(inout) :: moy(nint)
   integer, dimension(nint), intent(in) :: is, js, ks, ls
 
@@ -14,26 +14,27 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
   integer :: i, j, k, l, kk, iter, shift, n, m, mmax
   integer*8 :: ii, jj, kcp
   double precision :: r1, r2, hij
-  double precision, allocatable :: W(:,:), U(:,:)
+  double precision, allocatable :: W(:,:), U(:,:), D(:), Vt(:,:)
   double precision, allocatable :: Wt(:,:), Ut(:,:)
   double precision, allocatable :: small_h(:,:), small_s(:,:), small_v(:,:)
 
   double precision, external :: dnrm2
   logical :: converged
 
-  integer :: lwork, info
+  integer :: lwork, info, rank
   double precision, allocatable :: work(:), residual_norm(:), E_tmp(:)
   integer :: xi(8), xj(8), xk(8), xl(8)
 
   n = nbasis*nbasis
 
-  if (nbasis < 200) then
+  if (nbasis < 400) then
 
     ! Lapack
     ! ======
+    rank = min(n, 1000)
 
-    allocate (W(n,n),U(n,n), E_tmp(n))
-    W = 0.d0
+    allocate (W(n,n))
+    W(:,:) = 0.d0
 
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
@@ -69,43 +70,22 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
       W(ii,jj) = moy(kcp)
     enddo
 
-    U = W
+    allocate(U(n,rank), Vt(n,rank), D(rank))
+    call randomized_svd(W, size(W,1), U, size(U,1), D, Vt, size(Vt,1), &
+      n, n, 10, rank)
 
-    lwork = -1
-    allocate(work(1))
-    call dsyev('V', 'U', n, &
-         U, size(U,1), &
-         E_tmp, work, lwork, info)
-    lwork = int(work(1))
-    deallocate(work)
-
-    allocate(work(lwork))
-    call dsyev('V', 'U', n, &
-         U, size(U,1), &
-         E_tmp, work, lwork, info)
-    deallocate(work)
-
-    if (info /= 0) then
-       print *, 'info=', info
-       stop 'DSYGV Diagonalization failed'
-    endif
-
- do l=1,n
- print *, l, E_tmp(l)
- enddo
-    do l=1,n
-      if (E_tmp(l) >= 0.d0) exit
-    end do
-    l=l-1
-
-    do k=1,l
+    deallocate(Vt)
+    W(:,:) = 0.d0
+    do k=1,rank
+     print *, k, D(k)
      do j=1,n
        do i=1,n
-          W(i,j) = W(i,j) - E_tmp(k) * U(i,k) * U(j,k)
+          W(i,j) = W(i,j) + D(k) * U(i,k) * U(j,k)
         end do
       end do
     end do
 
+    deallocate(D)
 
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
@@ -114,11 +94,12 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
     enddo
 
     deallocate(W,U)
-
+    return
 
 
   else
 
+    return
 
 
     ! Davidson
@@ -324,4 +305,4 @@ subroutine davidson_clean(moy, nint, is, js, ks, ls, nbasis)
 
   endif
 
-end subroutine davidson_clean
+end subroutine svd_clean

@@ -5,6 +5,7 @@ program integrals
   use trexio
 #endif
 
+  implicit none
 #ifdef HAVE_MPI
   include 'mpif.h'
 #endif
@@ -20,7 +21,6 @@ program integrals
 
   double precision, allocatable  :: e_S_ijkl(:)
   double precision, allocatable  :: e_G_ijkl(:)
-  double precision, allocatable  :: e_test_ijkl(:)
   double precision, allocatable  :: error_ijkl(:)
   integer, allocatable           :: mono_center(:)
   double precision, allocatable  :: moy(:), moy2(:), moy2t(:)
@@ -62,7 +62,8 @@ program integrals
   integer*4                      :: put(33)
 
   integer                        :: i_rand, num_simulation, npts_two_elec
-  integer                        :: i, j, k, l, k_sort2, kkk, kcp, ll
+  integer                        :: i, j, k, l, k_sort2, kkk, ll
+  integer*8                      :: kcp
   integer                        :: nint_zero, i_value, n_zero_cauchy, num
   integer                        :: nbl, ndiff, kk, ik, kw, jl, n_ijkl
   double precision               :: t0, t1, factor, r2_mod, r1_mod, r12_2
@@ -70,6 +71,8 @@ program integrals
   double precision               :: a_ijkln, diff_ijkl, diff_ijklmax, f
 
   double precision, external     :: gauss_ijkl
+  integer :: xi(8), xj(8), xk(8), xl(8), ii, jj
+
 
 #ifdef HAVE_TREXIO
   character*(128)   :: trexio_filename
@@ -157,7 +160,7 @@ program integrals
   if(mpi_rank.eq.0)print*,'ENUCL=',enucl
 
   call read_basis(filename_basis)
-  call build_gaussian_expansion_of_orbitals(mpi_rank)
+  call build_gaussian_expansion_of_orbitals()
 
   if(mpi_rank.eq.0)write(*,*)'**********************************'
   if(mpi_rank.eq.0)write(*,*)'Number of basis functions ',nbasis
@@ -176,7 +179,6 @@ program integrals
   allocate(ijkl(nint),ijkl2(nint))
   allocate(e_S_ijkl(nint))
   allocate(e_G_ijkl(nint))
-  allocate(e_test_ijkl(nint))
   allocate(error_ijkl(nint))
   allocate(mono_center(nint))
   allocate(moy(nint), moy2(nint), moy2t(nint))
@@ -353,7 +355,6 @@ program integrals
     do kcp=1,nint
       e_S_ijkl(kcp)=0.d0
       e_G_ijkl(kcp)=0.d0
-      e_test_ijkl(kcp)=0.d0
     enddo
 
     k_sort2=0
@@ -411,7 +412,6 @@ program integrals
           enddo
           e_S_ijkl(kcp)=e_S_ijkl(kcp) + sum(weight  (1:nw)*r12_inv(1:nw))
           e_G_ijkl(kcp)=e_G_ijkl(kcp) + sum(weight_G(1:nw)*r12_inv(1:nw))
-          e_test_ijkl(kcp)=e_test_ijkl(kcp) + sum(r12_inv(1:nw))
 
         endif
       enddo !kcp
@@ -428,7 +428,6 @@ program integrals
       if(mono_center(kcp).eq.0)then
         e_S_ijkl(kcp)=e_S_ijkl(kcp) * factor
         e_G_ijkl(kcp)=e_G_ijkl(kcp) * factor
-        e_test_ijkl(kcp)=e_test_ijkl(kcp) * factor
       endif
     enddo
 
@@ -440,7 +439,7 @@ program integrals
       l=ls(kcp)
       if(i_value.ne.0)then
         if(mono_center(kcp).eq.0)then
-          e_tot_ijkl=e_S_ijkl(kcp)-e_G_ijkl(kcp)+ijkl_gaus(kcp)
+          e_tot_ijkl=e_S_ijkl(kcp)-e_G_ijkl(kcp) !+ijkl_gaus(kcp)
           ijkl(kcp)=ijkl(kcp)+e_tot_ijkl
           ijkl2(kcp)=ijkl2(kcp)+e_tot_ijkl*e_tot_ijkl
         endif
@@ -503,7 +502,7 @@ program integrals
       if( dabs(moy(kcp)).gt.1.d-6.and.(moy2(kcp).ne.0.d0))then
         errmoy_ijkl=errmoy_ijkl+moy2(kcp)
         dmoy_ijkl=dmoy_ijkl+1.d0
-        diff_ijkl=dabs(moy(kcp)-ijkl_gaus(kcp))/moy2(kcp)
+        diff_ijkl=dabs(moy(kcp))/moy2(kcp)
         if(diff_ijkl.gt.diff_ijklmax)diff_ijklmax=diff_ijkl
         if(diff_ijkl.gt.3.d0)then
           a_ijkln=a_ijkln+diff_ijkl
@@ -517,28 +516,54 @@ program integrals
 
     if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
-    call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
-
-    ! use W(i,j) - |W(i,j)|/W(i,j) * err(i,j) for off-diagonal and
-    ! use W(i,i) + |W(i,i)|/W(i,i) * err(i,i) for diagonal to make 
-    ! the matrix positive definite
+!    ! use W(i,j) - |W(i,j)|/W(i,j) * err(i,j) for off-diagonal and
+!    ! use W(i,i) + |W(i,i)|/W(i,i) * err(i,i) for diagonal to make 
+!    ! the matrix positive definite
 !    do kcp=1,nint
-!       i=is(kcp)
-!       k=ks(kcp)
-!       j=js(kcp)
-!       l=ls(kcp)
-!       f = 2.d0
-!       if ( ( (i==j).and.(k==l) ) .or. &
-!            ( (k==j).and.(i==l) ) ) f = -f
 !
-!       if ((moy(kcp) > ijkl_gaus(kcp)).and.(moy(kcp)-f*moy2(kcp) > ijkl_gaus(kcp))) then
+!        f = 10.d0
+!
+!        i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
+!        xi(1) = i ; xj(1) = j ; xk(1) = k ; xl(1) = l
+!        xi(2) = i ; xj(2) = l ; xk(2) = k ; xl(2) = j
+!        xi(3) = k ; xj(3) = j ; xk(3) = i ; xl(3) = l
+!        xi(4) = k ; xj(4) = l ; xk(4) = i ; xl(4) = j
+!        xi(5) = j ; xj(5) = i ; xk(5) = l ; xl(5) = k
+!        xi(6) = j ; xj(6) = k ; xk(6) = l ; xl(6) = i
+!        xi(7) = l ; xj(7) = i ; xk(7) = j ; xl(7) = k
+!        xi(8) = l ; xj(8) = k ; xk(8) = j ; xl(8) = i
+!
+!        do i=2,8
+!          do j=1,i-1
+!            if ( (xi(i) == xi(j)).and. &
+!                 (xj(i) == xj(j)).and. &
+!                 (xk(i) == xk(j)).and. &
+!                 (xl(i) == xl(j)) ) then
+!                xi(i) = 0
+!                exit
+!            endif
+!          enddo
+!        enddo
+!
+!        do i=1,8
+!          if (xi(i) == 0) cycle
+!          ii = xi(i) + (xj(i)-1)*nbasis ; jj = xk(i) + (xl(i)-1)*nbasis
+!          if (ii == jj) f = 0.d0 !-dabs(f)
+!        enddo
+!
+!       if ((moy(kcp) > 0.d0).and.(moy(kcp)-f*moy2(kcp) > 0.d0)) then
 !         moy(kcp) = moy(kcp) - f*moy2(kcp)
-!       else if ((moy(kcp) < ijkl_gaus(kcp)).and.(moy(kcp)+f*moy2(kcp) < ijkl_gaus(kcp))) then
+!       else if ((moy(kcp) < 0.d0).and.(moy(kcp)+f*moy2(kcp) < 0.d0)) then
 !         moy(kcp) = moy(kcp) + f*moy2(kcp)
 !       else
-!        moy(kcp) = ijkl_gaus(kcp)
+!        moy(kcp) = 0.d0
 !       endif
 !    enddo
+
+     moy(:) = moy(:)+ijkl_gaus(:)
+!     call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
+     call svd_clean(moy, nint, is, js, ks, ls, nbasis)
+
 
 
 #ifdef HAVE_TREXIO
