@@ -72,6 +72,7 @@ program integrals
 
   double precision, external     :: gauss_ijkl
   integer :: xi(8), xj(8), xk(8), xl(8), ii, jj
+  logical, parameter :: do_exact_monocenter = .True.
 
 
 #ifdef HAVE_TREXIO
@@ -279,15 +280,17 @@ program integrals
   nbl=10
 
   mono_center(:) = 0
-  !! Determination of one-center bielectronic
-!  do kcp=1,nint
-!    i=is(kcp)
-!    k=ks(kcp)
-!    j=js(kcp)
-!    l=ls(kcp)
-!    call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
-!    if(ndiff.eq.1)mono_center(kcp)=1
-!  enddo
+  if (do_exact_monocenter) then
+    !! Determination of one-center bielectronic
+     do kcp=1,nint
+       i=is(kcp)
+       k=ks(kcp)
+       j=js(kcp)
+       l=ls(kcp)
+       call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
+       if(ndiff.eq.1)mono_center(kcp)=1
+     enddo
+   endif
 
   if(mpi_rank.eq.0)then
     print*,'*********************************'
@@ -307,28 +310,30 @@ program integrals
     enddo
   enddo
 
-  !**************************************************
-!  !! Exact calculation of monocenter Slater integrals
-!  do kcp=1,nint
-!    i=is(kcp)
-!    k=ks(kcp)
-!    j=js(kcp)
-!    l=ls(kcp)
-!    if(mono_center(kcp).eq.1)then
-!      call compute_int_slater(i,k,j,l,ijkl(kcp))
-!    endif
-!  enddo
-!  !! end calculation ***********************************
+  if (do_exact_monocenter) then
+    !**************************************************
+     !! Exact calculation of monocenter Slater integrals
+     do kcp=1,nint
+       i=is(kcp)
+       k=ks(kcp)
+       j=js(kcp)
+       l=ls(kcp)
+       if(mono_center(kcp).eq.1)then
+         call compute_int_slater(i,k,j,l,ijkl(kcp))
+       endif
+     enddo
+     !! end calculation ***********************************
 
-!  call cpu_time(t1)
-!  if (mpi_rank == 0) print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
+     call cpu_time(t1)
+     if (mpi_rank == 0) print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
 
-!  do kcp=1,nint
-!    if(mono_center(kcp).eq.0)then
-!      ijkl(kcp)=0.d0
-!      ijkl2(kcp)=0.d0
-!    endif
-!  enddo
+     do kcp=1,nint
+       if(mono_center(kcp).eq.0)then
+         ijkl(kcp)=0.d0
+         ijkl2(kcp)=0.d0
+       endif
+     enddo
+   endif
 
   !! Determine which i j are used in computation of W_S and W_G
   !! i_tab_mc(i,k)=1  W_S and W_G can be computed
