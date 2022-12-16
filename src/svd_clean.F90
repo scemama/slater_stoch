@@ -115,7 +115,7 @@ subroutine svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
     enddo
 
     do kk=1,rank
-      if (ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1)) < 0.d0) then
+      if (ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1)) >= 0.d0) then
         Vt(kk,1:n) = 0.d0
       endif
     enddo
@@ -134,7 +134,7 @@ subroutine svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      moy(kcp) = W(ii,jj)
+      moy(kcp) = moy(kcp) - W(ii,jj)
     enddo
 
     deallocate(W)
@@ -335,7 +335,7 @@ subroutine svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
     deallocate(UY)
 
     do kk=1,rank
-      if (ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1)) < 0.d0) then
+      if (ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1)) >= 0.d0) then
         Vt(kk,1:n) = 0.d0
       endif
     enddo
@@ -374,12 +374,11 @@ subroutine svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
 
     enddo
 
-    moy(:) = 0.d0
     do kcp=1, nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
       do kk=1,rank
-        moy(kcp) = moy(kcp) + Vt(kk,ii) * Zt(kk,jj)
+        moy(kcp) = moy(kcp) - Vt(kk,ii) * Zt(kk,jj)
       enddo
     enddo
 
