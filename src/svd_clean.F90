@@ -119,6 +119,7 @@ subroutine svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
         Vt(kk,1:n) = 0.d0
       endif
     enddo
+    print *, 'Smallest singular value kept: ', D(rank)
 
     deallocate(U)
     allocate(U(rank,n))
@@ -338,6 +339,7 @@ subroutine svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
         Vt(kk,1:n) = 0.d0
       endif
     enddo
+    print *, 'Smallest singular value kept: ', D(rank)
 
     Zt = 0.d0
     do kcp=1,nint
