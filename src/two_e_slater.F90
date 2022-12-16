@@ -286,7 +286,7 @@ program integrals
 !    j=js(kcp)
 !    l=ls(kcp)
 !    call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
-!    if(ndiff.eq.1)mono_center(kcp)=1 
+!    if(ndiff.eq.1)mono_center(kcp)=1
 !  enddo
 
   if(mpi_rank.eq.0)then
@@ -518,15 +518,14 @@ program integrals
 
   if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
-  moy(:) = moy(:)+ijkl_gaus(:)
-  if (mpi_rank == 0) then 
+  if (mpi_rank == 0) then
     q=10
     rank=min(20*nbasis, nbasis*nbasis)
-    rank=nbasis*nbasis
-    call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q, mpi_rank, mpi_size)
+    call svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q, mpi_rank, mpi_size)
+    moy(:) = moy(:)+ijkl_gaus(:)
   endif
 
-  if (mpi_rank == 0) then 
+  if (mpi_rank == 0) then
 
 
 #ifdef HAVE_TREXIO
