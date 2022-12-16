@@ -532,7 +532,7 @@ program integrals
     enddo
     q=10
     rank=min(20*nbasis, nbasis*nbasis)
-    call svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q, mpi_rank, mpi_size)
+    call svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
     do kcp=1,nint
         moy(kcp) = moy(kcp)+ijkl_gaus(kcp)
     enddo
