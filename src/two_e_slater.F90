@@ -524,10 +524,18 @@ program integrals
   if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
   if (mpi_rank == 0) then
+    do kcp=1,nint
+      if (mono_center(kcp) == 1) then
+        ijkl_gaus(kcp) = ijkl(kcp)
+        moy(kcp) = 0.d0
+      endif
+    enddo
     q=10
     rank=min(20*nbasis, nbasis*nbasis)
     call svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q, mpi_rank, mpi_size)
-    moy(:) = moy(:)+ijkl_gaus(:)
+    do kcp=1,nint
+        moy(kcp) = moy(kcp)+ijkl_gaus(kcp)
+    enddo
   endif
 
   if (mpi_rank == 0) then
