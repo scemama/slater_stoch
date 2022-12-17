@@ -176,6 +176,12 @@ program integrals
   !! nint= total number of two-electron integrals
   call build_mapping_ijkl(nint)
 
+#ifdef HAVE_MPI
+  if (nint > HUGE(1_4)) then
+    stop 'nint too large for MPI'
+  endif
+#endif
+
   allocate(ijkl_gaus(nint))
   allocate(ijkl(nint),ijkl2(nint))
   allocate(e_S_ijkl(nint))
@@ -238,14 +244,13 @@ program integrals
       n_zero_cauchy=n_zero_cauchy+1
     else
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
-!      ijkl_gaus(kcp)=0.d0
     endif
 
   enddo !kcp
 
 #ifdef HAVE_MPI
   call mpi_allreduce(MPI_IN_PLACE,n_zero_cauchy, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
-  call mpi_allreduce(MPI_IN_PLACE,ijkl_gaus, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+  call mpi_allreduce(MPI_IN_PLACE,ijkl_gaus, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 #endif
 
   call cpu_time(t1)
@@ -472,11 +477,11 @@ program integrals
 
 #ifdef HAVE_MPI
     mpi_size_inv = 1.d0/dble(mpi_size)
-    call MPI_AllReduce(ijkl, moy, nint, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
+    call MPI_AllReduce(ijkl, moy, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
     moy(:)=moy(:) * mpi_size_inv
 
     moy2t(:) = (ijkl(:) -  moy(:))**2
-    call MPI_reduce(moy2t, moy2, nint, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
+    call MPI_reduce(moy2t, moy2, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
     moy2(:)=dsqrt(moy2(:) * mpi_size_inv/ (dble(mpi_size-1)) )
 #else
     stop 'mpi_size should not be >1'
@@ -523,20 +528,18 @@ program integrals
 
   if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
-  if (mpi_rank == 0) then
-    do kcp=1,nint
-      if (mono_center(kcp) == 1) then
-        ijkl_gaus(kcp) = ijkl(kcp)
-        moy(kcp) = 0.d0
-      endif
-    enddo
-    moy(:) = moy(:) + ijkl_gaus(:)
-    q=10
-    rank=min(10*nbasis, nbasis*nbasis)
-!    rank= nbasis*nbasis
-      call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
-!    call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
-  endif
+  do kcp=1,nint
+    if (mono_center(kcp) == 1) then
+      ijkl_gaus(kcp) = ijkl(kcp)
+      moy(kcp) = 0.d0
+    endif
+  enddo
+  moy(:) = moy(:) + ijkl_gaus(:)
+  q=10
+  rank=min(10*nbasis, nbasis*nbasis)
+!  rank= nbasis*nbasis
+  call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
+! call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
 
   if (mpi_rank == 0) then
 
