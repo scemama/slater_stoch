@@ -530,12 +530,12 @@ program integrals
         moy(kcp) = 0.d0
       endif
     enddo
+    moy(:) = moy(:) + ijkl_gaus(:)
     q=10
     rank=min(10*nbasis, nbasis*nbasis)
-    call svd_clean(moy, ijkl_gaus, nint, is, js, ks, ls, nbasis, rank, q)
-    do kcp=1,nint
-        moy(kcp) = moy(kcp)+ijkl_gaus(kcp)
-    enddo
+!    rank= nbasis*nbasis
+    call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
+!    call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
   endif
 
   if (mpi_rank == 0) then
