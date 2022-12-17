@@ -3,7 +3,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
   ! Removes negative eigenvalues of the ERI matrix
 
   integer*8, intent(in)          :: nint
-  integer, intent(in)            :: nbasis, rank, q
+  integer, intent(in)            :: nbasis, q
+  integer, intent(inout)         :: rank
   double precision, intent(inout) :: moy(nint)
   integer, dimension(nint), intent(in) :: is, js, ks, ls
 
@@ -32,7 +33,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
   rank2 = 1
   nremoved = 0
 
-  if (nbasis < 100) then
+  if (nbasis < 50) then
 
 
     allocate (W(n,n))
@@ -99,6 +100,10 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
           U(1:n,rank2) = U(1:n,kk)
         endif
       enddo
+      ! Assume than there are 2x more negative eigenvalues not found yet.
+      ! They are bounded by the last singular value. So we can shift the
+      ! spectrum accordingly
+      D(1:rank2) = D(1:rank2) - dabs(D(rank))
       print *, 'Smallest found singular value    : ', D(rank)
       print *, 'Smallest rejected singular value : ', D(rank2)
       nremoved = nremoved + rank2
@@ -151,8 +156,6 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
     enddo
 
     deallocate(W)
-    return
-
 
   else
 
@@ -363,6 +366,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
           D(rank2) = D(kk)
         endif
       enddo
+      D(1:rank2) = D(1:rank2) - dabs(D(rank))
       print *, 'Smallest found singular value    : ', D(rank)
       print *, 'Smallest rejected singular value : ', D(rank2)
       nremoved = nremoved + rank2
@@ -422,5 +426,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       deallocate(D, Vt, U, Zt)
 
   endif
+
+  rank = rank2
 
 end subroutine svd_clean
