@@ -20,7 +20,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
   integer*8                      :: ii, jj, kcp
   double precision               :: r1, r2
   double precision, allocatable  :: W(:,:), U(:,:), D(:), Vt(:,:)
-  double precision, allocatable  :: Wt(:,:), Ut(:,:)
+  double precision, allocatable  :: W_work(:,:)
   double precision, allocatable  :: Pt(:,:), Zt(:,:), UY(:,:)
   double precision, allocatable  :: P(:,:), Z(:,:)
   double precision, parameter    :: dtwo_pi = 2.d0*dacos(-1.d0)
@@ -29,8 +29,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
   double precision, external     :: dnrm2, ddot
   logical                        :: converged
 
-  integer                        :: lwork, info, rank2, nremoved
-  double precision, allocatable  :: work(:), residual_norm(:), E_tmp(:)
+  integer                        :: lwork, info, rank2, nremoved, npass
+  double precision, allocatable  :: moy_work(:)
   integer                        :: xi(8), xj(8), xk(8), xl(8)
 
 #ifdef HAVE_MPI
@@ -42,6 +42,10 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
   n = nbasis*nbasis
   rank2 = 1
   nremoved = 0
+  npass = 0
+
+  allocate(moy_work(nint))
+  moy_work(:) = moy(:)
 
 #ifdef HAVE_MPI
     call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
@@ -59,100 +63,153 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
     mpi_size = 1
 #endif
 
-  if (nbasis < 50) then
+  if (nbasis < 100) then
 
     if (mpi_rank /= 0) return
 
-    allocate (W(n,n))
-    W(:,:) = 0.d0
+    allocate (W(n,n), W_work(n,n))
+    W_work(:,:) = 0.d0
 
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = ks(kcp) ; j = js(kcp) ; k = is(kcp) ; l = ls(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = ks(kcp) ; j = ls(kcp) ; k = is(kcp) ; l = js(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = is(kcp) ; j = ls(kcp) ; k = ks(kcp) ; l = js(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = js(kcp) ; j = is(kcp) ; k = ls(kcp) ; l = ks(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = js(kcp) ; j = ks(kcp) ; k = ls(kcp) ; l = is(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = ls(kcp) ; j = ks(kcp) ; k = js(kcp) ; l = is(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
 
       i = ls(kcp) ; j = is(kcp) ; k = js(kcp) ; l = ks(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
-      W(ii,jj) = moy(kcp)
+      W_work(ii,jj) = moy_work(kcp)
     enddo
 
-! do i=1,n
-!  W(i,i) = W(i,i) - 30.d0
-! enddo
+    W(:,:) = W_work(:,:)
+    do npass=1,n,rank/2
 
       allocate(U(n,rank))
       allocate(D(rank))
       allocate(Vt(rank,n))
 
+!      allocate(U(n,n))
+!      allocate(D(n))
+!      allocate(Vt(n,n))
+
       if (rank < n) then
-        call randomized_svd(W, size(W,1), U, size(U,1), D, Vt, size(Vt,1),&
+        call randomized_svd(W_work, size(W_work,1), U, size(U,1), D, Vt, size(Vt,1),&
           n, n, q, rank)
       else
         print *, 'calling svd'
-        call svd(W,size(W,1),U,size(U,1),D,Vt,size(Vt,1),n,n)
+        call svd(W_work,size(W_work,1),U,size(U,1),D,Vt,size(Vt,1),n,n)
       endif
 
-      do kk=1,rank
-        if (ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1)) <= 0.d0) then
+      do kk=1,rank/2
+        r1 = ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1))
+        if (r1 < 0.d0) then
           D(kk) = -D(kk)
         endif
-! D(kk) = D(kk) + 30.d0
+        if (dabs(r1) < 0.99d0) then
+          D(kk) = 0.d0
+        endif
       end do
 
-      rank2 = 0
-      do kk=1,rank
-        if (D(kk) < 0.d0) then
-          rank2 = rank2+1
-          D(rank2) = D(kk)
-          Vt(rank2,1:n) = Vt(kk,1:n)
-          U(1:n,rank2) = U(1:n,kk)
-        endif
-      enddo
+!      rank2 = 0
+!      do kk=1,rank
+!        if (D(kk) < 0.d0) then
+!          rank2 = rank2+1
+!          D(rank2) = D(kk)
+!          Vt(rank2,1:n) = Vt(kk,1:n)
+!          U(1:n,rank2) = U(1:n,kk)
+!        endif
+!      enddo
+      print *, 'Smallest found singular value    : ', D(rank)
       ! Assume than there are 2x more negative eigenvalues not found yet.
       ! They are bounded by the last singular value. So we can shift the
       ! spectrum accordingly
-      D(1:rank2) = D(1:rank2) - dabs(D(rank))
-      print *, 'Smallest found singular value    : ', D(rank)
-      print *, 'Smallest rejected singular value : ', D(rank2)
-      nremoved = nremoved + rank2
-      print *, 'Removed ', nremoved, ' components'
-      print *, D(1:3)
+!      D(1:rank) = D(1:rank) - dabs(D(rank))
 
-      do jj=1,n
-        do ii=1,n
-          W(ii,jj) = 0.d0
-          do kk=1,rank2
-            W(ii,jj) = W(ii,jj) + U(ii,kk) * D(kk) * Vt(kk,jj)
+      ! Remove positive eigenvalues from moy_work
+      do kk=1,rank/2
+        do jj=1,n
+         do ii=1,n
+            W_work(ii,jj) = W_work(ii,jj) - U(ii,kk) * dabs(D(kk)) * Vt(kk,jj)
           enddo
         enddo
       enddo
 
+!    moy_work = 0.d0
+!    do kcp=1,nint
+!      i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = ks(kcp) ; j = js(kcp) ; k = is(kcp) ; l = ls(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = ks(kcp) ; j = ls(kcp) ; k = is(kcp) ; l = js(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = is(kcp) ; j = ls(kcp) ; k = ks(kcp) ; l = js(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = js(kcp) ; j = is(kcp) ; k = ls(kcp) ; l = ks(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = js(kcp) ; j = ks(kcp) ; k = ls(kcp) ; l = is(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = ls(kcp) ; j = ks(kcp) ; k = js(kcp) ; l = is(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!
+!      i = ls(kcp) ; j = is(kcp) ; k = js(kcp) ; l = ks(kcp)
+!      ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
+!      moy_work(kcp) = moy_work(kcp) + W_work(ii,jj)*0.125d0
+!    enddo
+
+      ! Remove negative eigenvalues from moy
+      do kk=1,rank/2
+        if (D(kk) >= 0.d0) cycle
+        do jj=1,n
+          do ii=1,n
+            W(ii,jj) = W(ii,jj) + U(ii,kk) * D(kk) * Vt(kk,jj)
+          enddo
+        enddo
+        nremoved = nremoved+1
+      enddo
+      print *, 'Removed ', nremoved, ' components'
+      print *, D(1:3)
+
       deallocate(D, Vt, U)
 
+    end do
+
+    moy(:) = 0.d0
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
@@ -187,7 +244,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       moy(kcp) = moy(kcp) + W(ii,jj)*0.125d0
     enddo
 
-    deallocate(W)
+    deallocate(W, W_work)
 
   else
 
@@ -203,7 +260,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
             r2 = Zt(k,i)
             r1 = dsqrt(-2.d0*dlog(r1))
             r2 = dtwo_pi*r2
-            Pt(k,i) = r1*dcos(r2)
+            Pt(k,i) = r1*dsin(r2)
           enddo
         enddo
       endif
