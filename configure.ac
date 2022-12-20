@@ -11,6 +11,7 @@ AM_INIT_AUTOMAKE([subdir-objects color-tests parallel-tests silent-rules 1.11])
 AM_SILENT_RULES(yes)
 
 AC_LANG(Fortran)
+AM_PROG_CC_C_O
 
 # Checks for programs.
 #AC_PROG_F77
