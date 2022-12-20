@@ -41,6 +41,16 @@ LIBS="$LIBS $BLAS_LIBS"
 AC_LANG_PUSH(C)
 AC_CHECK_FUNC([vderfcinv],[ AC_DEFINE([HAVE_VDERFINVC],[1],[vdErfInvc found]) ])
 
+AC_ARG_ENABLE([mmap],
+            [AS_HELP_STRING([--enable-mmap],
+                            [Enable support for mmap])],
+            [enable_mmap=$enableval],
+            [enable_mmap=yes])
+
+AM_CONDITIONAL([HAVE_MMAP], [test "$enable_mmap" = "yes"])
+
+AS_IF([test "$enable_mmap" = "yes"], [AC_DEFINE([HAVE_MMAP], [1], [Use mmap in SVD cleaning])])
+
 AC_ARG_WITH([trexio],
             [AS_HELP_STRING([--without-trexio],
                             [disable support for TREXIO])],

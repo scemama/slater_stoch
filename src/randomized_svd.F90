@@ -15,24 +15,25 @@ subroutine randomized_svd(A,LDA,U,LDU,D,Vt,LDVt,m,n,q,r)
   integer                         :: i, j, k
 
   double precision, parameter     :: dtwo_pi = 2.d0*dacos(-1.d0)
-  double precision,allocatable    :: Z(:,:), P(:,:), Y(:,:), UY(:,:)
+  double precision,allocatable    :: Z(:,:), P(:,:), Y(:,:), UY(:,:), rd(:,:)
   double precision :: r1,r2
 
   double precision, external :: dnrm2, gauss
   allocate(P(n,r), Z(m,r))
 
   ! P is a normal random matrix (n,r)
+  allocate(rd(n,2))
   do k=1,r
+    call random_number(rd)
     do i=1,n
-      call random_number(r1)
-      call random_number(r2)
-      r1 = dsqrt(-2.d0*dlog(r1))
-      r2 = dtwo_pi*r2
+      r1 = dsqrt(-2.d0*dlog(rd(i,1)))
+      r2 = dtwo_pi*rd(i,2)
       P(i,k) = r1*dcos(r2)
     enddo
     r1 = dnrm2(n,P(1:n,k),1)
     call dscal(n,1.d0/r1,P(1:n,k),1)
   enddo
+  deallocate(rd)
 
   ! Z(m,r) = A(m,n).P(n,r)
   call dgemm('N','N',m,r,n,1.d0,A,size(A,1),P,size(P,1),0.d0,Z,size(Z,1))

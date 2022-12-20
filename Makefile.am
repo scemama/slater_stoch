@@ -69,8 +69,13 @@ MODULES_O = src/common_data.$(OBJEXT) src/trexio.$(OBJEXT)
 one_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) \
  src/one_e_slater.F90
 
+if HAVE_MMAP
+MMAP_FILES = src/fortran_mmap.c src/mmap.F90
+else
+MMAP_FILES =
+endif
 
-two_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) \
+two_e_slater_SOURCES = $(MODULES_O) $(COMMON_SOURCE) $(MMAP_FILES) \
  src/compare_nuclei.F90 \
  src/compute_densities.F90 \
  src/compute_int_slater.F90 \
