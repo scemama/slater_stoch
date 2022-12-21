@@ -84,6 +84,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       allocate(W(n,n), W_work(n,n))
 #endif
 
+    W_work(:,:) = 0.d0
     do kcp=1,nint
       i = is(kcp) ; j = js(kcp) ; k = ks(kcp) ; l = ls(kcp)
       ii = i + (j-1)*nbasis ; jj = k + (l-1)*nbasis
