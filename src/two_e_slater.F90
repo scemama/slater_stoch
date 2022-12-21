@@ -536,10 +536,8 @@ program integrals
   enddo
   moy(:) = moy(:) + ijkl_gaus(:)
   q=10
-  rank=min(10*nbasis, nbasis*nbasis)
-!  rank= nbasis*nbasis
+  rank=min(128, nbasis*nbasis)
   call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
-! call davidson_clean(moy, nint, is, js, ks, ls, nbasis)
 
   if (mpi_rank == 0) then
 
