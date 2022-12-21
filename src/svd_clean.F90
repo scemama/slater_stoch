@@ -33,7 +33,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
   double precision, external     :: dnrm2, ddot
   logical                        :: converged
 
-  integer                        :: lwork, info, rank2, nremoved, npass
+  integer                        :: lwork, info, nremoved, npass
   double precision, allocatable  :: moy_work(:)
   integer                        :: w0, w1
 
@@ -53,9 +53,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #endif
 
   n = nbasis*nbasis
-  rank2 = 1
   nremoved = 0
-  npass = 0
 
 #ifdef HAVE_MPI
     call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
@@ -270,7 +268,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
           if (r1 < 0.d0) then
             D(kk) = -D(kk)
           endif
-          if (dabs(r1) < 0.99d0) then
+          if (dabs(r1) < 0.d0) then
             D(kk) = 0.d0
           endif
         end do
@@ -364,7 +362,5 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       deallocate(W, W_work)
 #endif
     endif
-
-    rank = rank2
 
 end subroutine svd_clean
