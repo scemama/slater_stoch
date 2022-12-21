@@ -35,13 +35,12 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
   integer                        :: lwork, info, nremoved, npass
   double precision, allocatable  :: moy_work(:)
-  integer                        :: w0, w1
+  integer                        :: w0, w1, wsize
 
 #ifdef HAVE_MPI
   integer                        :: ierr
   integer                        :: mpi_status(MPI_STATUS_SIZE)
   integer                        :: mpi_rank, mpi_size
-  integer                        :: column_type
 #endif
 
 #ifdef HAVE_MMAP
@@ -66,16 +65,6 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
        print *, 'MPI error:', __FILE__, ':', __LINE__
        stop -1
     endif
-    call MPI_Type_Contiguous(n,MPI_DOUBLE_PRECISION,column_type,ierr)
-    if (ierr /= MPI_SUCCESS) then
-       print *, 'MPI error:', __FILE__, ':', __LINE__
-       stop -1
-    endif
-    call MPI_Type_Commit(column_type,ierr)
-    if (ierr /= MPI_SUCCESS) then
-       print *, 'MPI error:', __FILE__, ':', __LINE__
-       stop -1
-    endif
 #else
     mpi_rank = 0
     mpi_size = 1
@@ -84,6 +73,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
     w0 = n/mpi_size+1
     w1 = min(n,(mpi_rank+1)*w0)
     w0 = (mpi_rank)*w0+1
+    wsize = w1-w0+1
 
     if (mpi_size == 1) then
 
@@ -146,6 +136,17 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
    allocate(UY(rank,rank))
 
     do npass=1,n,rank/2
+      if (mpi_rank == 0) then
+        print *, ''
+        print *, 'Vectors ', npass, '--', min(n,npass+rank/2-1), ' / ', n
+      endif
+#ifdef HAVE_MPI
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
+#endif
 
       ! ---
       ! P is a normal random matrix (n,rank)
@@ -164,7 +165,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
         deallocate(rd)
       endif
 #ifdef HAVE_MPI
-      call MPI_BCAST(P, rank, column_type, 0, MPI_COMM_WORLD, ierr)
+      call MPI_BCAST(P, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
       if (ierr /= MPI_SUCCESS) then
          print *, 'MPI error:', __FILE__, ':', __LINE__
          stop -1
@@ -173,9 +174,13 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
 
       ! Z(n,rank) = W_work(n,n).P(n,rank)
-      call dgemm('N', 'N', n, rank, w1-w0+1, 1.d0, &
-        W_work(1,w0), size(W_work,1), &
-        P(w0,1), size(P,1), 0.d0, Z, size(Z,1))
+      if (wsize > 0) then
+        call dgemm('N', 'N', n, rank, wsize, 1.d0, &
+          W_work(1,w0), size(W_work,1), &
+          P(w0,1), size(P,1), 0.d0, Z, size(Z,1))
+      else
+        Z = 0.d0
+      endif
 
       ! QR factorization of Z
 #ifdef HAVE_MPI
@@ -190,7 +195,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
         call ortho_qr(Z,size(Z,1),n,rank)
 #ifdef HAVE_MPI
       endif
-      call MPI_BCAST(Z, rank, column_type, 0, MPI_COMM_WORLD, ierr)
+      call MPI_BCAST(Z, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
       if (ierr /= MPI_SUCCESS) then
          print *, 'MPI error:', __FILE__, ':', __LINE__
          stop -1
@@ -201,9 +206,11 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       do i=1,q
         ! P(n,rank) = W_work^t(n,n).Z(n,rank)
         P=0.d0
-        call dgemm('T', 'N', w1-w0+1, rank, n, 1.d0, &
-            W_work(1,w0), size(W_work,1), Z, size(Z,1), 0.d0, &
-            P(w0,1), size(P,1))
+        if (wsize > 0) then
+          call dgemm('T', 'N', wsize, rank, n, 1.d0, &
+              W_work(1,w0), size(W_work,1), Z, size(Z,1), 0.d0, &
+              P(w0,1), size(P,1))
+        endif
 #ifdef HAVE_MPI
         call MPI_AllReduce(MPI_IN_PLACE, P, n*rank, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
         if (ierr /= MPI_SUCCESS) then
@@ -213,9 +220,13 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #endif
 
         ! Z(n,rank) = W_work(n,n).P(n,rank)
-        call dgemm('N', 'N', n, rank, w1-w0+1, 1.d0, &
-            W_work(1,w0), size(W_work,1), P(w0,1), size(P,1), 0.d0, &
-            Z, size(Z,1))
+        if (wsize > 0) then
+          call dgemm('N', 'N', n, rank, wsize, 1.d0, &
+              W_work(1,w0), size(W_work,1), P(w0,1), size(P,1), 0.d0, &
+              Z, size(Z,1))
+        else
+          Z = 0.d0
+        endif
 
 #ifdef HAVE_MPI
         call MPI_Reduce(Z, U, n*rank, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
@@ -229,7 +240,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
           call ortho_qr(Z,size(Z,1),n,rank)
 #ifdef HAVE_MPI
         endif
-        call MPI_BCAST(Z, rank, column_type, 0, MPI_COMM_WORLD, ierr)
+        call MPI_BCAST(Z, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
         if (ierr /= MPI_SUCCESS) then
            print *, 'MPI error:', __FILE__, ':', __LINE__
            stop -1
@@ -239,10 +250,12 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
 
       ! Y(rank,n) = Zt(rank,n).W_work(n,n)
-       Y = 0.d0
-      call dgemm('T', 'N', rank, w1-w0+1, n, 1.d0, &
-        Z, size(Z,1), W_work(1,w0), size(W_work,1), 0.d0, &
-        Y(1,w0), size(Y,1))
+      Y = 0.d0
+      if (wsize > 0) then
+        call dgemm('T', 'N', rank, wsize, n, 1.d0, &
+          Z, size(Z,1), W_work(1,w0), size(W_work,1), 0.d0, &
+          Y(1,w0), size(Y,1))
+      endif
 
 #ifdef HAVE_MPI
       call MPI_Reduce(Y, Vt, n*rank, MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
@@ -279,8 +292,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       endif
 
       call MPI_BCAST(D, rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
-      call MPI_BCAST(U, rank, column_type, 0, MPI_COMM_WORLD, ierr)
-      call MPI_BCAST(Vt, rank, column_type, 0, MPI_COMM_WORLD, ierr)
+      call MPI_BCAST(U, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+      call MPI_BCAST(Vt, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
 #endif
 
       ! Remove positive eigenvalues from W_work
