@@ -46,7 +46,7 @@ AC_ARG_ENABLE([mmap],
             [AS_HELP_STRING([--enable-mmap],
                             [Enable support for mmap])],
             [enable_mmap=$enableval],
-            [enable_mmap=yes])
+            [enable_mmap=no])
 
 AM_CONDITIONAL([HAVE_MMAP], [test "$enable_mmap" = "yes"])
 
