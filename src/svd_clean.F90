@@ -327,6 +327,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
       ! Remove positive eigenvalues from W_work
       do kk=1,rank/2
+        if (D(kk) == 0.d0) cycle
         do jj=w0,w1
           do ii=1,n
             W_work(ii,jj) = W_work(ii,jj) - U(ii,kk) * dabs(D(kk)) * Vt(kk,jj)
