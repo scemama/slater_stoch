@@ -1,4 +1,3 @@
-! #undef HAVE_MPI
 subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #ifdef HAVE_MMAP
   use mmap_module
@@ -137,11 +136,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
    allocate(Y(rank,n), Vt(rank,n))
    allocate(UY(rank,rank))
 
-   do npass=1,n,rank/2
-      if (mpi_rank == 0) then
-        print *, ''
-        print *, 'Vectors ', npass, '--', min(n,npass+rank/2-1), ' / ', n
-      endif
+   npass = 0
+   do while (npass < n)
 #ifdef HAVE_MPI
       call MPI_Barrier(MPI_COMM_WORLD, ierr)
       if (ierr /= MPI_SUCCESS) then
@@ -149,6 +145,10 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
          stop -1
       endif
 #endif
+      if (mpi_rank == 0) then
+        print *, ''
+        print *, 'Vectors ', npass+1, '--', min(npass+rank,n), ' / ', n
+      endif
 
       ! ---
       ! P is a normal random matrix (n,rank)
@@ -278,17 +278,19 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
         ! ---
 
-        do kk=1,rank/2
+        print *, 'Largest/Smallest singular value : ', real(D(1)), real(D(rank))
+        npass = npass + rank
+        do kk=1,rank
           r1 = ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1))
           if (r1 < 0.d0) then
             D(kk) = -D(kk)
           endif
           if (dabs(r1) < 0.99d0) then
             D(kk) = 0.d0
+            npass = npass-1
           endif
         end do
 
-        print *, 'Smallest found singular value    : ', D(rank)
 
 #ifdef HAVE_MPI
       endif
@@ -326,7 +328,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #endif
 
       ! Remove positive eigenvalues from W_work
-      do kk=1,rank/2
+      do kk=1,rank
         if (D(kk) == 0.d0) cycle
         do jj=w0,w1
           do ii=1,n
@@ -336,7 +338,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       enddo
 
       ! Remove negative eigenvalues from W
-      do kk=1,rank/2
+      do kk=1,rank
         if (D(kk) >= 0.d0) cycle
         do jj=w0,w1
           do ii=1,n
@@ -348,9 +350,16 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
       if (mpi_rank == 0) then
         print *, 'Removed ', nremoved, ' components'
-        print *, D(1:3)
       endif
 
+      if (maxval(dabs(D)) < 1.d-12) npass = n
+#ifdef HAVE_MPI
+      call MPI_BCAST(npass, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
+#endif
     end do
 
     deallocate(D, Vt, U, P, Z, UY, Y)
