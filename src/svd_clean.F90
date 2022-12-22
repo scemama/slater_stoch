@@ -1,3 +1,4 @@
+! #undef HAVE_MPI
 subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #ifdef HAVE_MMAP
   use mmap_module
@@ -40,8 +41,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #ifdef HAVE_MPI
   integer                        :: ierr
   integer                        :: mpi_status(MPI_STATUS_SIZE)
-  integer                        :: mpi_rank, mpi_size
 #endif
+  integer                        :: mpi_rank, mpi_size
 
 #ifdef HAVE_MMAP
   type(c_ptr) :: ptr_W, ptr_W_work
@@ -53,6 +54,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
   n = nbasis*nbasis
   nremoved = 0
+
 
 #ifdef HAVE_MPI
     call MPI_COMM_RANK (MPI_COMM_WORLD, mpi_rank, ierr)
@@ -135,7 +137,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
    allocate(Y(rank,n), Vt(rank,n))
    allocate(UY(rank,rank))
 
-    do npass=1,n,rank/2
+   do npass=1,n,rank/2
       if (mpi_rank == 0) then
         print *, ''
         print *, 'Vectors ', npass, '--', min(n,npass+rank/2-1), ' / ', n
@@ -245,8 +247,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
            print *, 'MPI error:', __FILE__, ':', __LINE__
            stop -1
         endif
-      enddo
 #endif
+      enddo
 
 
       ! Y(rank,n) = Zt(rank,n).W_work(n,n)
@@ -281,7 +283,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
           if (r1 < 0.d0) then
             D(kk) = -D(kk)
           endif
-          if (dabs(r1) < 0.9d0) then
+          if (dabs(r1) < 0.99d0) then
             D(kk) = 0.d0
           endif
         end do
