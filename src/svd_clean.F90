@@ -281,7 +281,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
           if (r1 < 0.d0) then
             D(kk) = -D(kk)
           endif
-          if (dabs(r1) < 0.d0) then
+          if (dabs(r1) < 0.9d0) then
             D(kk) = 0.d0
           endif
         end do
@@ -292,8 +292,35 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       endif
 
       call MPI_BCAST(D, rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
       call MPI_BCAST(U, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
       call MPI_BCAST(Vt, n*rank, MPI_DOUBLE_PRECISION, 0, MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
+      call MPI_Barrier(MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
 #endif
 
       ! Remove positive eigenvalues from W_work
@@ -363,6 +390,10 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
 #ifdef HAVE_MPI
     call MPI_AllReduce(MPI_IN_PLACE, moy, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
+    if (ierr /= MPI_SUCCESS) then
+       print *, 'MPI error:', __FILE__, ':', __LINE__
+       stop -1
+    endif
 #endif
 
 
