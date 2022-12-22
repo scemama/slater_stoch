@@ -1,4 +1,3 @@
-! #undef HAVE_MPI
 subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #ifdef HAVE_MMAP
   use mmap_module
