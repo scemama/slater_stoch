@@ -136,10 +136,11 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
    allocate(Y(rank,n), Vt(rank,n))
    allocate(UY(rank,rank))
 
-   do npass=1,n,rank/2
+   npass = 0
+   do while (npass <= n)
       if (mpi_rank == 0) then
         print *, ''
-        print *, 'Vectors ', npass, '--', min(n,npass+rank/2-1), ' / ', n
+        print *, 'Vectors ', npass+1, '--', min(n,npass+rank), ' / ', n
       endif
 #ifdef HAVE_MPI
       call MPI_Barrier(MPI_COMM_WORLD, ierr)
@@ -277,17 +278,19 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
         ! ---
 
-        do kk=1,rank/2
+        print *, 'Largest/Smallest singular value : ', D(1), D(rank)
+        npass = npass + rank
+        do kk=1,rank
           r1 = ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1))
           if (r1 < 0.d0) then
             D(kk) = -D(kk)
           endif
           if (dabs(r1) < 0.99d0) then
             D(kk) = 0.d0
+            npass = npass-1
           endif
         end do
 
-        print *, 'Smallest found singular value    : ', D(rank)
 
 #ifdef HAVE_MPI
       endif
@@ -325,7 +328,8 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 #endif
 
       ! Remove positive eigenvalues from W_work
-      do kk=1,rank/2
+      do kk=1,rank
+        if (D(kk) == 0.d0) cycle
         do jj=w0,w1
           do ii=1,n
             W_work(ii,jj) = W_work(ii,jj) - U(ii,kk) * dabs(D(kk)) * Vt(kk,jj)
@@ -334,7 +338,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       enddo
 
       ! Remove negative eigenvalues from W
-      do kk=1,rank/2
+      do kk=1,rank
         if (D(kk) >= 0.d0) cycle
         do jj=w0,w1
           do ii=1,n
@@ -346,9 +350,9 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
       if (mpi_rank == 0) then
         print *, 'Removed ', nremoved, ' components'
-        print *, D(1:3)
       endif
 
+      if (maxval(dabs(D)) < 1.d-12) exit
     end do
 
     deallocate(D, Vt, U, P, Z, UY, Y)

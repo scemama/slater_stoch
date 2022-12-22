@@ -535,8 +535,8 @@ program integrals
     endif
   enddo
   moy(:) = moy(:) + ijkl_gaus(:)
-  q=10
-  rank=min(1024, nbasis*nbasis)
+  q=12
+  rank=min(512, nbasis*nbasis)
   call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
   if (mpi_rank == 0) then
