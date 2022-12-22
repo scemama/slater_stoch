@@ -137,11 +137,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
    allocate(UY(rank,rank))
 
    npass = 0
-   do while (npass <= n)
-      if (mpi_rank == 0) then
-        print *, ''
-        print *, 'Vectors ', npass+1, '--', min(n,npass+rank), ' / ', n
-      endif
+   do while (npass < n)
 #ifdef HAVE_MPI
       call MPI_Barrier(MPI_COMM_WORLD, ierr)
       if (ierr /= MPI_SUCCESS) then
@@ -149,6 +145,10 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
          stop -1
       endif
 #endif
+      if (mpi_rank == 0) then
+        print *, ''
+        print *, 'Vectors ', npass+1, '--', min(npass+rank,n), ' / ', n
+      endif
 
       ! ---
       ! P is a normal random matrix (n,rank)
@@ -278,7 +278,7 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
 
         ! ---
 
-        print *, 'Largest/Smallest singular value : ', D(1), D(rank)
+        print *, 'Largest/Smallest singular value : ', real(D(1)), real(D(rank))
         npass = npass + rank
         do kk=1,rank
           r1 = ddot(n, U(1,kk), 1, Vt(kk,1), size(Vt,1))
@@ -352,7 +352,14 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
         print *, 'Removed ', nremoved, ' components'
       endif
 
-      if (maxval(dabs(D)) < 1.d-12) exit
+      if (maxval(dabs(D)) < 1.d-12) npass = n
+#ifdef HAVE_MPI
+      call MPI_BCAST(npass, 1, MPI_INTEGER, 0, MPI_COMM_WORLD, ierr)
+      if (ierr /= MPI_SUCCESS) then
+         print *, 'MPI error:', __FILE__, ':', __LINE__
+         stop -1
+      endif
+#endif
     end do
 
     deallocate(D, Vt, U, P, Z, UY, Y)
