@@ -17,7 +17,7 @@ subroutine trexio_write_geometry(trexio_file)
   rc = trexio_write_nucleus_coord(trexio_file, centers_nuclei)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
-  rc = trexio_write_nucleus_label(trexio_file, ATOM, len(ATOM(1)))
+  rc = trexio_write_nucleus_label(trexio_file, ATOM, len(ATOM(1))+1)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
   rc = trexio_write_nucleus_repulsion(trexio_file, enucl)
