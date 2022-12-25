@@ -1,7 +1,7 @@
 subroutine read_basis(filename_basis)
   use common_data
   character(128), intent(in)    :: filename_basis
-  character(80) ATOM_READ
+  character(2) ATOM_READ
   character(80) orb
 
   integer :: i, i_atom
@@ -25,7 +25,7 @@ subroutine read_basis(filename_basis)
 
   n_b(:) = 0
   open(7,file=filename_basis)
-  do i=1,n_atoms_max
+  do 
     read(7,*,end=1000)ATOM_READ,orb,gam
     i_atom=number_atom(ATOM_READ)
     n_b(i_atom)=n_b(i_atom)+1

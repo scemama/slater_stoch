@@ -16,10 +16,10 @@ subroutine read_geometry(MOLECULE)
   allocate(ATOM(number_nuclei))
   allocate(centers_nuclei(3,number_nuclei))
   allocate(charge(number_nuclei))
-  read(2,'(a80)')charabid
+  read(2,*)
 
   do i=1,number_nuclei
-    read(2,*)ATOM(i),centers_nuclei(1,i),centers_nuclei(2,i),centers_nuclei(3,i)
+    read(2,*) ATOM(i),centers_nuclei(1,i),centers_nuclei(2,i),centers_nuclei(3,i)
     charge(i)=number_atom(ATOM(i))
     do l=1,3
       centers_nuclei(l,i)=conversion_ang_to_ua*centers_nuclei(l,i)

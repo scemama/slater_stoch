@@ -72,7 +72,7 @@ program integrals
 
   double precision, external     :: gauss_ijkl
   integer :: xi(8), xj(8), xk(8), xl(8), ii, jj
-  logical, parameter :: do_exact_monocenter = .True.
+  logical, parameter :: do_exact_monocenter = .False.
 
 
 #ifdef HAVE_TREXIO
@@ -332,22 +332,12 @@ program integrals
      call cpu_time(t1)
      if (mpi_rank == 0) print *, 'Time for one-center integrals: ', t1-t0, ' seconds'
 
-     do kcp=1,nint
-       if(mono_center(kcp).eq.0)then
-         ijkl(kcp)=0.d0
-         ijkl2(kcp)=0.d0
-       endif
-     enddo
    endif
 
   !! Determine which i j are used in computation of W_S and W_G
   !! i_tab_mc(i,k)=1  W_S and W_G can be computed
   allocate(i_tab_mc(nbasis,nbasis))
-  do k=1,nbasis
-    do i=k,nbasis
-      i_tab_mc(i,k)=0
-    enddo
-  enddo
+  i_tab_mc = 0
   do kcp=1,nint
     i=is(kcp)
     k=ks(kcp)
@@ -415,11 +405,12 @@ program integrals
             d_x(3) = ut1(kw,3,ik)-ut2(kw,3,jl)
             r12_2 = d_x(1)*d_x(1) + d_x(2)*d_x(2) + d_x(3)*d_x(3)
 
-            factor=rjacob(kw)/pi_0(kw)
+            ! factor=rjacob(kw)/pi_0(kw)                   ! simple precision
+            factor=real(real(rjacob(kw),4)/real(pi_0(kw),4),8) ! double precision
             weight  (kw)=factor* rho  (kw,ik,1)*rho  (kw,jl,2)
             weight_G(kw)=factor* rho_G(kw,ik,1)*rho_G(kw,jl,2)
-            r12_inv(kw) = real( 1./sqrt(real(r12_2,4)), 8) !simple precision
-            !      r12_inv(kw) = 1.d0/dsqrt(r12_2)                !double precision
+            r12_inv(kw) = real( 1./sqrt(real(r12_2,4)), 8) ! simple precision
+            !      r12_inv(kw) = 1.d0/dsqrt(r12_2)         ! double precision
           enddo
           e_S_ijkl(kcp)=e_S_ijkl(kcp) + sum(weight  (1:nw)*r12_inv(1:nw))
           e_G_ijkl(kcp)=e_G_ijkl(kcp) + sum(weight_G(1:nw)*r12_inv(1:nw))

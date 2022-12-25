@@ -28,7 +28,7 @@ module common_data
 
   ! Allocated in read_geometry
   integer                        :: number_nuclei                            ! Number of nuclei in molecule
-  character(80), allocatable     :: ATOM(:)                                  ! Atom labels
+  character(2), allocatable      :: ATOM(:)                                  ! Atom labels
   double precision, allocatable  :: charge(:)                                ! Nuclear charges
   double precision, allocatable  :: centers_nuclei(:,:)                      ! XYZ coordinates of nuclei
   double precision               :: enucl                                    ! Nuclear repulsion energy
