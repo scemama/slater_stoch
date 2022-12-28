@@ -23,7 +23,6 @@ program integrals
   double precision, allocatable  :: e_G_ijkl(:)
   double precision, allocatable  :: error_ijkl(:)
   integer, allocatable           :: mono_center(:)
-  double precision, allocatable  :: moy(:), moy2(:), moy2t(:)
   double precision, allocatable  :: G_center(:,:,:)
 
   double precision               :: Sij, Vij, Kij
@@ -76,11 +75,11 @@ program integrals
 
 
 #ifdef HAVE_TREXIO
+  integer, parameter:: BUFSIZE = 4096
   character*(128)   :: trexio_filename
   integer           :: rc
   integer(trexio_t) :: trexio_file
   character(128)    :: err_message
-  integer, parameter:: BUFSIZE = 32768
   integer           :: indx(4,BUFSIZE)
   double precision  :: vals(BUFSIZE)
   integer*8         :: icount, offset
@@ -183,12 +182,12 @@ program integrals
 #endif
 
   allocate(ijkl_gaus(nint))
-  allocate(ijkl(nint),ijkl2(nint))
+  allocate(ijkl(nint))
+  allocate(ijkl2(nint))
   allocate(e_S_ijkl(nint))
   allocate(e_G_ijkl(nint))
   allocate(error_ijkl(nint))
   allocate(mono_center(nint))
-  allocate(moy(nint), moy2(nint), moy2t(nint))
   ijkl = 0.d0
   ijkl2 = 0.d0
 
@@ -232,7 +231,7 @@ program integrals
   call cpu_time(t0)
 
   kkk=0
-  ijkl_gaus = 0.d0
+  ijkl_gaus = 0.
   do kcp=mpi_rank+1,nint, mpi_size
 
     i=is(kcp)
@@ -468,20 +467,24 @@ program integrals
 
 #ifdef HAVE_MPI
     mpi_size_inv = 1.d0/dble(mpi_size)
-    call MPI_AllReduce(ijkl, moy, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
-    moy(:)=moy(:) * mpi_size_inv
+    call MPI_AllReduce(ijkl, ijkl2, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
+    do kcp=1,nint
+      f = ijkl2(kcp) * mpi_size_inv
+      ijkl2(kcp) = (ijkl(kcp) - f)*(ijkl(kcp) - f)
+      ijkl(kcp) = f
+    enddo
 
-    moy2t(:) = (ijkl(:) -  moy(:))**2
-    call MPI_reduce(moy2t, moy2, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, 0, MPI_COMM_WORLD,ierr)
-    moy2(:)=dsqrt(moy2(:) * mpi_size_inv/ (dble(mpi_size-1)) )
+    call MPI_AllReduce(MPI_IN_PLACE, ijkl2, int(nint,4), MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD,ierr)
+    do kcp=1,nint
+      ijkl2(kcp)=dsqrt(ijkl2(kcp) * mpi_size_inv/ (dble(mpi_size-1)) )
+    enddo
 #else
     stop 'mpi_size should not be >1'
 #endif
 
   else
 
-    moy(:)=ijkl(:)
-    moy2(:)=error_ijkl(:)
+    ijkl2(:)=error_ijkl(:)
 
   endif
 
@@ -499,12 +502,12 @@ program integrals
       k=ks(kcp)
       j=js(kcp)
       l=ls(kcp)
-      if(moy2(kcp).gt.error_max)error_max=moy2(kcp)
+      if(ijkl2(kcp).gt.error_max)error_max=ijkl2(kcp)
 
-      if( dabs(moy(kcp)).gt.1.d-6.and.(moy2(kcp).ne.0.d0))then
-        errmoy_ijkl=errmoy_ijkl+moy2(kcp)
+      if( dabs(ijkl(kcp)).gt.1.d-6.and.(ijkl2(kcp).ne.0.d0))then
+        errmoy_ijkl=errmoy_ijkl+ijkl2(kcp)
         dmoy_ijkl=dmoy_ijkl+1.d0
-        diff_ijkl=dabs(moy(kcp))/moy2(kcp)
+        diff_ijkl=abs(real(ijkl(kcp),4))/ijkl2(kcp)
         if(diff_ijkl.gt.diff_ijklmax)diff_ijklmax=diff_ijkl
         if(diff_ijkl.gt.3.d0)then
           a_ijkln=a_ijkln+diff_ijkl
@@ -522,13 +525,13 @@ program integrals
   do kcp=1,nint
     if (mono_center(kcp) == 1) then
       ijkl_gaus(kcp) = ijkl(kcp)
-      moy(kcp) = 0.d0
+      ijkl(kcp) = 0.d0
     endif
   enddo
-  moy(:) = moy(:) + ijkl_gaus(:)
+  ijkl(:) = ijkl(:)+ ijkl_gaus(:)
   q=12
   rank=min(512, nbasis*nbasis)
-  call svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
+  call svd_clean(ijkl, nint, is, js, ks, ls, nbasis, rank, q)
 
   if (mpi_rank == 0) then
 
@@ -542,9 +545,9 @@ program integrals
     icount = 0_8
     offset = 0_8
     do kcp=1,nint
-      if (dabs(moy(kcp)) < 1.d-15) cycle
+      if (dabs(ijkl(kcp)) < 1.d-15) cycle
       icount = icount + 1_8
-      vals(icount) = moy(kcp)
+      vals(icount) = ijkl(kcp)
       indx(1,icount) = is(kcp)
       indx(2,icount) = js(kcp)
       indx(3,icount) = ks(kcp)
@@ -572,7 +575,7 @@ program integrals
       k=ks(kcp)
       j=js(kcp)
       l=ls(kcp)
-      write(104,'(4(I5,X),2D22.15)') i,j,k,l, moy(kcp), moy2(kcp)
+      write(104,'(4(I5,X),2D22.15)') i,j,k,l, ijkl(kcp), ijkl2(kcp)
     enddo
     close(104)
 
