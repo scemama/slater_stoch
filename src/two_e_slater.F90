@@ -22,13 +22,13 @@ program integrals
   double precision, allocatable  :: e_S_ijkl(:)
   double precision, allocatable  :: e_G_ijkl(:)
   double precision, allocatable  :: error_ijkl(:)
-  integer, allocatable           :: mono_center(:)
   double precision, allocatable  :: G_center(:,:,:)
+  logical, allocatable           :: mono_center(:)
 
   double precision               :: Sij, Vij, Kij
 
   !! MONTE CARLO PART
-  integer, allocatable           :: i_tab_mc(:,:)
+  logical, allocatable           :: i_tab_mc(:,:)
   double precision               :: d_x(4)
 
   double precision               :: r12_inv(nw), r1(nw,3), r2(nw,3)
@@ -233,19 +233,30 @@ program integrals
   kkk=0
   ijkl_gaus = 0.
   do kcp=mpi_rank+1,nint, mpi_size
+    i=is(kcp)
+    k=ks(kcp)
+    j=js(kcp)
+    l=ls(kcp)
+    if(dabs(precond(i,k)*precond(j,l))<seuil_cauchy*seuil_cauchy)then
+      n_zero_cauchy=n_zero_cauchy+1
+    endif
+
+  enddo !kcp
+
+  !$OMP PARALLEL DO PRIVATE(kcp,i,j,k,l)
+  do kcp=mpi_rank+1,nint, mpi_size
 
     i=is(kcp)
     k=ks(kcp)
     j=js(kcp)
     l=ls(kcp)
 
-    if(dsqrt(precond(i,k)*precond(j,l)).lt.seuil_cauchy)then
-      n_zero_cauchy=n_zero_cauchy+1
-    else
+    if(dabs(precond(i,k)*precond(j,l))>=seuil_cauchy*seuil_cauchy)then
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
     endif
 
   enddo !kcp
+  !$OMP END PARALLEL DO
 
 #ifdef HAVE_MPI
   call mpi_allreduce(MPI_IN_PLACE,n_zero_cauchy, 1, MPI_INTEGER, MPI_SUM, MPI_COMM_WORLD, ierr)
@@ -283,7 +294,7 @@ program integrals
 
   nbl=10
 
-  mono_center(:) = 0
+  mono_center(:) = .False.
   if (do_exact_monocenter) then
     !! Determination of one-center bielectronic
      do kcp=1,nint
@@ -292,7 +303,7 @@ program integrals
        j=js(kcp)
        l=ls(kcp)
        call compare_nuclei(nucleus_number(i),nucleus_number(j),nucleus_number(k),nucleus_number(l),ndiff)
-       if(ndiff.eq.1)mono_center(kcp)=1
+       mono_center(kcp)= (ndiff.eq.1)
      enddo
    endif
 
@@ -306,6 +317,7 @@ program integrals
   endif
 
   allocate(G_center(3, nbasis, nbasis))
+  !$OMP PARALLEL DO PRIVATE(i,j,ll) COLLAPSE(2)
   do j=1,nbasis
     do i=1,nbasis
       do ll=1,3
@@ -313,19 +325,22 @@ program integrals
       enddo
     enddo
   enddo
+  !$OMP END PARALLEL DO
 
   if (do_exact_monocenter) then
     !**************************************************
      !! Exact calculation of monocenter Slater integrals
+     !$OMP PARALLEL DO PRIVATE(i,j,k,l,kcp) 
      do kcp=1,nint
        i=is(kcp)
        k=ks(kcp)
        j=js(kcp)
        l=ls(kcp)
-       if(mono_center(kcp).eq.1)then
+       if(mono_center(kcp))then
          call compute_int_slater(i,k,j,l,ijkl(kcp))
        endif
      enddo
+     !$OMP END PARALLEL DO
      !! end calculation ***********************************
 
      call cpu_time(t1)
@@ -336,14 +351,14 @@ program integrals
   !! Determine which i j are used in computation of W_S and W_G
   !! i_tab_mc(i,k)=1  W_S and W_G can be computed
   allocate(i_tab_mc(nbasis,nbasis))
-  i_tab_mc = 0
+  i_tab_mc = .False.
   do kcp=1,nint
     i=is(kcp)
     k=ks(kcp)
     j=js(kcp)
     l=ls(kcp)
-    i_tab_mc(i,k)=1
-    i_tab_mc(j,l)=1
+    i_tab_mc(i,k)=.True.
+    i_tab_mc(j,l)=.True.
   enddo
   !! end
 
@@ -363,9 +378,10 @@ program integrals
     do kk=1,npts_two_elec/nw
 
       call draw_configuration(r1,r2,nw)
+      !$OMP PARALLEL DO PRIVATE(i,k,ik,factor,kw,r1_mod,r2_mod) SCHEDULE(guided)
       do k=1,nbasis
         do i=k,nbasis
-          if(i_tab_mc(i,k).eq.1)then
+          if(i_tab_mc(i,k))then
             ik = (k-1)*nbasis+i
             factor = 0.5d0 * a_ZV /(g_slater(i)+g_slater(k))
             do kw=1,nw
@@ -377,11 +393,14 @@ program integrals
 
             call compute_densities(i,k,ut1,ut2,rho,rho_G,poly)
           endif
-        enddo !k
-      enddo !i
+        enddo !i
+      enddo !k
+      !$OMP END PARALLEL DO
       call compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,nbasis)
 
 
+      !$OMP PARALLEL DO PRIVATE(kcp,i,j,k,l,ik,jl,rjacob,d_x,r12_2,factor, &
+      !$OMP    weight, weight_G, r12_inv) 
       do kcp=1,nint
 
         i=is(kcp)
@@ -391,11 +410,7 @@ program integrals
         l=ls(kcp)
         jl = (l-1)*nbasis+j
 
-        if(dsqrt(precond(i,k)*precond(j,l)).lt.seuil_cauchy)then
-
-          n_zero_cauchy=n_zero_cauchy+1
-
-        else
+!        if(dabs(precond(i,k)*precond(j,l)) >= seuil_cauchy*seuil_cauchy)then
 
           rjacob(1:nw) = rjacob1(1:nw,i,k)*rjacob2(1:nw,j,l)
           do kw=1,nw
@@ -404,8 +419,8 @@ program integrals
             d_x(3) = ut1(kw,3,ik)-ut2(kw,3,jl)
             r12_2 = d_x(1)*d_x(1) + d_x(2)*d_x(2) + d_x(3)*d_x(3)
 
-            ! factor=rjacob(kw)/pi_0(kw)                   ! simple precision
-            factor=real(real(rjacob(kw),4)/real(pi_0(kw),4),8) ! double precision
+            factor=real(real(rjacob(kw),4)/real(pi_0(kw),4),8) ! simple precision
+            ! factor=rjacob(kw)/pi_0(kw)                   ! double precision
             weight  (kw)=factor* rho  (kw,ik,1)*rho  (kw,jl,2)
             weight_G(kw)=factor* rho_G(kw,ik,1)*rho_G(kw,jl,2)
             r12_inv(kw) = real( 1./sqrt(real(r12_2,4)), 8) ! simple precision
@@ -414,8 +429,9 @@ program integrals
           e_S_ijkl(kcp)=e_S_ijkl(kcp) + sum(weight  (1:nw)*r12_inv(1:nw))
           e_G_ijkl(kcp)=e_G_ijkl(kcp) + sum(weight_G(1:nw)*r12_inv(1:nw))
 
-        endif
+!        endif
       enddo !kcp
+      !$OMP END PARALLEL DO
 
       k_sort2=k_sort2+nw
       if( npts_two_elec.ge.10.and.mod(kcp,npts_two_elec/10).eq.0)then
@@ -426,24 +442,21 @@ program integrals
 
     factor = 1.d0 / dble(npts_two_elec)
     do kcp=1,nint
-      if(mono_center(kcp).eq.0)then
+      if(.not.mono_center(kcp))then
         e_S_ijkl(kcp)=e_S_ijkl(kcp) * factor
         e_G_ijkl(kcp)=e_G_ijkl(kcp) * factor
       endif
     enddo
 
     do kcp=1,nint
-      i_value=1
       i=is(kcp)
       k=ks(kcp)
       j=js(kcp)
       l=ls(kcp)
-      if(i_value.ne.0)then
-        if(mono_center(kcp).eq.0)then
+      if(.not.mono_center(kcp))then
           e_tot_ijkl=e_S_ijkl(kcp)-e_G_ijkl(kcp) !+ijkl_gaus(kcp)
           ijkl(kcp)=ijkl(kcp)+e_tot_ijkl
           ijkl2(kcp)=ijkl2(kcp)+e_tot_ijkl*e_tot_ijkl
-        endif
       endif
     enddo !kcp
 
@@ -453,7 +466,7 @@ program integrals
   enddo !kkk=1,nbl
 
   do kcp=1,nint
-    if(mono_center(kcp).eq.0)then
+    if(.not.mono_center(kcp))then
       ijkl(kcp)=ijkl(kcp)/nbl
       ijkl2(kcp)=ijkl2(kcp)/nbl
       error_ijkl(kcp)=dsqrt( dabs(ijkl2(kcp)-ijkl(kcp)*ijkl(kcp)))/dsqrt(dfloat(nbl))
@@ -523,7 +536,7 @@ program integrals
   if (mpi_rank == 0) print *, 'Cleaning ERI matrix'
 
   do kcp=1,nint
-    if (mono_center(kcp) == 1) then
+    if (mono_center(kcp)) then
       ijkl_gaus(kcp) = ijkl(kcp)
       ijkl(kcp) = 0.d0
     endif

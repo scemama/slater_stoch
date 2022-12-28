@@ -16,6 +16,7 @@ subroutine compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,n)
     d2(kw) = dsqrt(r2_mod_2)
     pi_0(kw)= dexp(-0.5d0*(r1_mod_2 + r2_mod_2)) * factor
   enddo
+  !$OMP PARALLEL DO PRIVATE(i,k,factor_ik,kw,f1,f2)
   do k=1,n
     do i=k,n
       factor_ik = a_ZV/(g_slater(i)+g_slater(k))
@@ -30,4 +31,5 @@ subroutine compute_jacobian_and_pi0(r1,r2,rjacob1,rjacob2,pi_0,n)
       enddo
     enddo
   enddo
+  !$OMP END PARALLEL DO
 end

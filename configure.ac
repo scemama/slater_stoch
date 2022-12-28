@@ -11,6 +11,8 @@ AM_INIT_AUTOMAKE([subdir-objects color-tests parallel-tests silent-rules 1.11])
 AM_SILENT_RULES(yes)
 
 AC_LANG(Fortran)
+AC_OPENMP()
+FCFLAGS="$FCFLAGS $OPENMP_FCFLAGS"
 AM_PROG_CC_C_O
 
 # Checks for programs.
@@ -19,8 +21,8 @@ AX_PROG_FC_MPI
 F77=$FC
 
 AS_CASE(["$FC"],
-[ifort*], [FCFLAGS="$FCFLAGS -mkl=sequential"], 
-[mpiifort*],  [FCFLAGS="$FCFLAGS -mkl=sequential"],
+[ifort*], [FCFLAGS="$FCFLAGS -mkl=parallel"], 
+[mpiifort*],  [FCFLAGS="$FCFLAGS -mkl=parallel"],
 [
 
 # Checks for libraries.
