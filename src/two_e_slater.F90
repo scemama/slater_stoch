@@ -215,11 +215,13 @@ program integrals
   end if
 
   allocate(precond(nbasis,nbasis))
+  !$OMP PARALLEL DO PRIVATE(i,k) COLLAPSE(2)
   do k=1,nbasis
     do i=1,nbasis
       precond(i,k)=gauss_ijkl(i,k,i,k)
     enddo
   enddo
+  !$OMP END PARALLEL DO
 
   k_sort2=0
   nint_zero=0
