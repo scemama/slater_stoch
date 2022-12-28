@@ -215,13 +215,17 @@ program integrals
   end if
 
   allocate(precond(nbasis,nbasis))
-  !$OMP PARALLEL DO PRIVATE(i,k) COLLAPSE(2)
+  precond = 0.d0
+  !$OMP PARALLEL DO PRIVATE(i,k) 
   do k=1,nbasis
-    do i=1,nbasis
+    do i=mpi_rank+1,nbasis,mpi_size
       precond(i,k)=gauss_ijkl(i,k,i,k)
     enddo
   enddo
   !$OMP END PARALLEL DO
+#ifdef HAVE_MPI
+  call mpi_allreduce(MPI_IN_PLACE,precond, nbasis*nbasis, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
+#endif
 
   k_sort2=0
   nint_zero=0
@@ -253,7 +257,9 @@ program integrals
     j=js(kcp)
     l=ls(kcp)
 
-    if(dabs(precond(i,k)*precond(j,l))>=seuil_cauchy*seuil_cauchy)then
+    if ((i==j).and.(k==l)) then
+      ijkl_gaus(kcp)=precond(i,k)
+    else if(dabs(precond(i,k)*precond(j,l))>=seuil_cauchy*seuil_cauchy)then
       ijkl_gaus(kcp)=gauss_ijkl(i,k,j,l)
     endif
 
