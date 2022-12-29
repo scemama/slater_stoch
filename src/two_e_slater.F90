@@ -85,6 +85,8 @@ program integrals
   integer*8         :: icount, offset
 #endif
 
+  integer, external  :: omp_get_num_threads
+
 
 #ifdef HAVE_MPI
   call mpi_init(ierr)
@@ -216,6 +218,15 @@ program integrals
 
   allocate(precond(nbasis,nbasis))
   precond = 0.d0
+  if (mpi_rank == 0) then
+    continue
+    !$OMP PARALLEL
+    !$OMP MASTER
+    !$ print *, 'Using ', omp_get_num_threads(), ' threads per MPI process'
+    !$OMP END MASTER
+    !$OMP END PARALLEL
+  endif
+
   !$OMP PARALLEL DO PRIVATE(i,k) 
   do k=1,nbasis
     do i=mpi_rank+1,nbasis,mpi_size
@@ -226,6 +237,7 @@ program integrals
 #ifdef HAVE_MPI
   call mpi_allreduce(MPI_IN_PLACE,precond, nbasis*nbasis, MPI_DOUBLE_PRECISION, MPI_SUM, MPI_COMM_WORLD, ierr)
 #endif
+  if (mpi_rank == 0) print *, 'Computed precond'
 
   k_sort2=0
   nint_zero=0
