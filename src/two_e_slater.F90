@@ -454,7 +454,7 @@ program integrals
       !$OMP END PARALLEL DO
 
       k_sort2=k_sort2+nw
-      if( npts_two_elec.ge.10.and.mod(kcp,npts_two_elec/10).eq.0)then
+      if( npts_two_elec.ge.10.and.mod(kcp,npts_two_elec/10_8).eq.0)then
         write(*,*)'mpi_rank= ',mpi_rank,' nsteps=',k_sort2
       endif
 
