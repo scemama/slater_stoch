@@ -38,7 +38,7 @@ subroutine trexio_write_basis(trexio_file)
   double precision, allocatable :: exponent(:), coefficient(:), shell_factor(:)
   double precision, allocatable :: prim_factor(:), ao_normalization(:)
 
-  rc = trexio_write_basis_type(trexio_file, 'S', 1)
+  rc = trexio_write_basis_type(trexio_file, 'Slater', 6)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
   shell_num = 0
