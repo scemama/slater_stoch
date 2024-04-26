@@ -116,6 +116,10 @@ program one_e_integrals
   rc = trexio_write_ao_1e_int_overlap(trexio_file, S_ij_STO_ex)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
+  S_ij_STO_ex = V_ij_STO_ex + K_ij_STO_ex
+  rc = trexio_write_ao_1e_int_core_hamiltonian(trexio_file, S_ij_STO_ex)
+  call trexio_assert(rc, TREXIO_SUCCESS)
+
 #else
 
   open(unit=104,file=filename_out_s_ex)
