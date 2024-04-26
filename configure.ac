@@ -34,6 +34,9 @@ LIBS="$LIBS $BLAS_LIBS"
 ])
 
 
+AS_CASE(["$FC"],
+[gfortran*], [FCFLAGS="$FCFLAGS -std=legacy"], 
+[])
 
 
 # Checks for header files.
