@@ -37,7 +37,9 @@ subroutine trexio_write_basis(trexio_file)
   integer, allocatable :: r_power(:), ao_shell(:)
   double precision, allocatable :: exponent(:), coefficient(:), shell_factor(:)
   double precision, allocatable :: prim_factor(:), ao_normalization(:)
+  double precision :: Sii, Vii, Kii
 
+  allocate(ao_normalization(nbasis))
   rc = trexio_write_basis_type(trexio_file, 'Slater', 6)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
@@ -74,7 +76,7 @@ subroutine trexio_write_basis(trexio_file)
   do i=1,nbasis
     m = m+1
     ao_shell(i) = m
-    select case (orb_name_full(i))
+    select case (trim(orb_name_full(i)))
       case ('1S')
         shell_ang_mom(m) = 0
         r_power(m) = 0
@@ -86,32 +88,38 @@ subroutine trexio_write_basis(trexio_file)
         r_power(m) = 2
       case ('2P_Z')
         shell_ang_mom(m) = 1
-        r_power(m) = 1
+        r_power(m) = 0
       case ('3P_Z')
         shell_ang_mom(m) = 1
-        r_power(m) = 2
+        r_power(m) = 1
       case ('3D_ZZ')
         shell_ang_mom(m) = 2
-        r_power(m) = 2
+        r_power(m) = 0
       case ('4F_ZZZ')
         shell_ang_mom(m) = 3
-        r_power(m) = 3
+        r_power(m) = 0
       case ('5G_ZZZZ')
         shell_ang_mom(m) = 4
-        r_power(m) = 4
+        r_power(m) = 0
       case default
         m = m-1
         cycle
     end select
     nucleus_index(m) = nucleus_number(i)
+
+    !TODO: generalize for contracted functions
     exponent(m) = g_contract(1,i)
+    call one_elect(i,i,Sii,Vii,Kii)
+    Sii = 1.d0
+    shell_factor(m) = 1.d0/dsqrt(Sii)
+    ao_normalization(i) = dsqrt(Sii)
   end do
 
   do m=1,shell_num
-     shell_index(m) = m
-     shell_factor(m) = 1.d0
-     coefficient(m) = 1.d0
-     prim_factor(m) = 1.d0
+    !TODO: generalize for contracted functions
+    shell_index(m) = m
+    coefficient(m) = 1.d0
+    prim_factor(m) = 1.d0
   end do
 
   rc = trexio_write_basis_nucleus_index(trexio_file, nucleus_index)
@@ -147,8 +155,10 @@ subroutine trexio_write_basis(trexio_file)
   rc = trexio_write_ao_shell(trexio_file, ao_shell)
   call trexio_assert(rc, TREXIO_SUCCESS)
 
-  allocate(ao_normalization(nbasis))
-  ao_normalization = 1.d0
+!  do i=1,nbasis
+!     call one_elect(i,i,Sii,Vii,Kii)
+!     ao_normalization(i) = 1.d0 !/dsqrt(Sii)
+!  enddo
 
   rc = trexio_write_ao_normalization(trexio_file, ao_normalization)
   call trexio_assert(rc, TREXIO_SUCCESS)

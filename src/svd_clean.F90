@@ -129,7 +129,11 @@ subroutine svd_clean(moy, nint, is, js, ks, ls, nbasis, rank, q)
       if ((jj >= w0).and.(jj <= w1)) W_work(ii,jj) = moy(kcp)
     enddo
 
-    W(:,:) = W_work(:,:)
+    do j=1,size(W,2)
+      do i=1,size(W,1)
+        W(i,j) = W_work(i,j)
+      enddo
+    enddo
 
    allocate(U(n,rank), P(n,rank), Z(n,rank))
    allocate(D(rank))
